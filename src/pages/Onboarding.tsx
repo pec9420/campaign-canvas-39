@@ -1,0 +1,490 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Card } from "@/components/ui/card";
+import { saveProfile, getProfile } from "@/utils/storage";
+import { BusinessProfile } from "@/data/profiles";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+const Onboarding = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const profileId = location.state?.profileId;
+
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState<Partial<BusinessProfile>>({
+    id: profileId || `profile_${Date.now()}`,
+    business_name: "",
+    niche: "",
+    owner_name: "",
+    brand_identity: {
+      colors: [],
+      personality: [],
+      visual_style: ""
+    },
+    voice: {
+      tone: "",
+      loved_words: [],
+      banned_words: []
+    },
+    content_rules: {
+      show_owner: true,
+      show_staff: true,
+      show_customers: true,
+      topics_to_avoid: []
+    },
+    business: {
+      location: "",
+      services: [],
+      price_point: "",
+      capacity: "",
+      unique_selling_points: []
+    },
+    audience: {
+      primary: [],
+      platforms: []
+    }
+  });
+
+  useEffect(() => {
+    if (profileId) {
+      const existing = getProfile(profileId);
+      if (existing && !existing.reset_on_load) {
+        navigate("/dashboard", { state: { profileId } });
+      }
+    }
+  }, [profileId, navigate]);
+
+  const handleNext = () => {
+    if (step < 7) setStep(step + 1);
+  };
+
+  const handleBack = () => {
+    if (step > 1) setStep(step - 1);
+  };
+
+  const handleSave = () => {
+    saveProfile(formData as BusinessProfile);
+    navigate("/dashboard", { state: { profileId: formData.id } });
+  };
+
+  const updateField = (path: string, value: any) => {
+    setFormData(prev => {
+      const keys = path.split(".");
+      const newData = { ...prev };
+      let current: any = newData;
+      
+      for (let i = 0; i < keys.length - 1; i++) {
+        current[keys[i]] = { ...current[keys[i]] };
+        current = current[keys[i]];
+      }
+      
+      current[keys[keys.length - 1]] = value;
+      return newData;
+    });
+  };
+
+  const toggleArrayItem = (path: string, item: string) => {
+    const keys = path.split(".");
+    let current: any = formData;
+    for (const key of keys) {
+      current = current[key];
+    }
+    const array = current || [];
+    const newArray = array.includes(item)
+      ? array.filter((i: string) => i !== item)
+      : [...array, item];
+    updateField(path, newArray);
+  };
+
+  return (
+    <div className="min-h-screen bg-background py-12 px-6">
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-3xl font-bold text-foreground">Business Setup</h1>
+            <span className="text-muted-foreground">Step {step} of 7</span>
+          </div>
+          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-primary transition-all duration-300"
+              style={{ width: `${(step / 7) * 100}%` }}
+            />
+          </div>
+        </div>
+
+        <Card className="p-8 bg-card border-border">
+          {step === 1 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Business Basics</h2>
+              
+              <div className="space-y-2">
+                <Label htmlFor="business_name">Business Name</Label>
+                <Input
+                  id="business_name"
+                  value={formData.business_name}
+                  onChange={(e) => updateField("business_name", e.target.value)}
+                  placeholder="e.g., Joe's Coffee Shop"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="niche">Business Type</Label>
+                <Input
+                  id="niche"
+                  value={formData.niche}
+                  onChange={(e) => updateField("niche", e.target.value)}
+                  placeholder="e.g., coffee shop, yoga studio"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="owner_name">Owner Name</Label>
+                <Input
+                  id="owner_name"
+                  value={formData.owner_name}
+                  onChange={(e) => updateField("owner_name", e.target.value)}
+                  placeholder="Your name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="location">Location</Label>
+                <Input
+                  id="location"
+                  value={formData.business?.location}
+                  onChange={(e) => updateField("business.location", e.target.value)}
+                  placeholder="City, State"
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Brand Identity</h2>
+              
+              <div className="space-y-2">
+                <Label>Brand Colors (select 2-3)</Label>
+                <div className="grid grid-cols-6 gap-3">
+                  {["#3B82F6", "#10B981", "#F59E0B", "#EF4444", "#8B5CF6", "#EC4899", "#14B8A6", "#F97316"].map((color) => (
+                    <button
+                      key={color}
+                      onClick={() => {
+                        const colors = formData.brand_identity?.colors || [];
+                        if (colors.includes(color)) {
+                          updateField("brand_identity.colors", colors.filter(c => c !== color));
+                        } else if (colors.length < 3) {
+                          updateField("brand_identity.colors", [...colors, color]);
+                        }
+                      }}
+                      className={`w-12 h-12 rounded-lg border-2 transition-all ${
+                        formData.brand_identity?.colors?.includes(color)
+                          ? "border-primary scale-110"
+                          : "border-border"
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Brand Personality</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["Playful", "Professional", "Bold", "Elegant", "Fun", "Serious", "Quirky", "Reliable", "Nostalgic", "Modern"].map((trait) => (
+                    <div key={trait} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={trait}
+                        checked={formData.brand_identity?.personality?.includes(trait.toLowerCase())}
+                        onCheckedChange={() => toggleArrayItem("brand_identity.personality", trait.toLowerCase())}
+                      />
+                      <Label htmlFor={trait} className="cursor-pointer">{trait}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Visual Style</Label>
+                <RadioGroup
+                  value={formData.brand_identity?.visual_style}
+                  onValueChange={(value) => updateField("brand_identity.visual_style", value)}
+                >
+                  {["pop_art", "minimalist", "vintage", "modern", "rustic", "clean"].map((style) => (
+                    <div key={style} className="flex items-center space-x-2">
+                      <RadioGroupItem value={style} id={style} />
+                      <Label htmlFor={style} className="cursor-pointer capitalize">{style.replace("_", "-")}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+            </div>
+          )}
+
+          {step === 3 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Voice & Tone</h2>
+              
+              <div className="space-y-3">
+                <Label>Tone</Label>
+                <RadioGroup
+                  value={formData.voice?.tone}
+                  onValueChange={(value) => updateField("voice.tone", value)}
+                >
+                  {[
+                    { value: "fun_and_cheeky", label: "Fun & cheeky" },
+                    { value: "professional_but_approachable", label: "Professional & approachable" },
+                    { value: "warm_and_friendly", label: "Warm & friendly" },
+                    { value: "bold_and_edgy", label: "Bold & edgy" }
+                  ].map((tone) => (
+                    <div key={tone.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={tone.value} id={tone.value} />
+                      <Label htmlFor={tone.value} className="cursor-pointer">{tone.label}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="loved_words">Words You Love Using</Label>
+                <Input
+                  id="loved_words"
+                  placeholder="e.g., amazing, fresh, authentic (comma separated)"
+                  value={formData.voice?.loved_words?.join(", ")}
+                  onChange={(e) => updateField("voice.loved_words", e.target.value.split(",").map(w => w.trim()))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="banned_words">Words to Avoid</Label>
+                <Input
+                  id="banned_words"
+                  placeholder="e.g., cheap, discount (comma separated)"
+                  value={formData.voice?.banned_words?.join(", ")}
+                  onChange={(e) => updateField("voice.banned_words", e.target.value.split(",").map(w => w.trim()))}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 4 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Content Rules</h2>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
+                  <Label htmlFor="show_owner" className="cursor-pointer">Can we show owner's face?</Label>
+                  <Checkbox
+                    id="show_owner"
+                    checked={formData.content_rules?.show_owner}
+                    onCheckedChange={(checked) => updateField("content_rules.show_owner", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
+                  <Label htmlFor="show_staff" className="cursor-pointer">Can we show staff?</Label>
+                  <Checkbox
+                    id="show_staff"
+                    checked={formData.content_rules?.show_staff}
+                    onCheckedChange={(checked) => updateField("content_rules.show_staff", checked)}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-4 bg-secondary rounded-lg">
+                  <Label htmlFor="show_customers" className="cursor-pointer">Can we show customers?</Label>
+                  <Checkbox
+                    id="show_customers"
+                    checked={formData.content_rules?.show_customers}
+                    onCheckedChange={(checked) => updateField("content_rules.show_customers", checked)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="topics_avoid">Topics to Avoid</Label>
+                <Textarea
+                  id="topics_avoid"
+                  placeholder="Enter any sensitive topics to avoid..."
+                  value={formData.content_rules?.topics_to_avoid?.join("\n")}
+                  onChange={(e) => updateField("content_rules.topics_to_avoid", e.target.value.split("\n").filter(Boolean))}
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 5 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Business Details</h2>
+              
+              <div className="space-y-2">
+                <Label htmlFor="services">Services Offered</Label>
+                <Textarea
+                  id="services"
+                  placeholder="Enter each service on a new line"
+                  value={formData.business?.services?.join("\n")}
+                  onChange={(e) => updateField("business.services", e.target.value.split("\n").filter(Boolean))}
+                  rows={4}
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Label>Price Point</Label>
+                <RadioGroup
+                  value={formData.business?.price_point}
+                  onValueChange={(value) => updateField("business.price_point", value)}
+                >
+                  {[
+                    { value: "budget", label: "Budget $" },
+                    { value: "mid_range", label: "Mid-range $$" },
+                    { value: "premium", label: "Premium $$$" }
+                  ].map((price) => (
+                    <div key={price.value} className="flex items-center space-x-2">
+                      <RadioGroupItem value={price.value} id={price.value} />
+                      <Label htmlFor={price.value} className="cursor-pointer">{price.label}</Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="capacity">Capacity/Constraints</Label>
+                <Input
+                  id="capacity"
+                  placeholder="e.g., 4 events per weekend max"
+                  value={formData.business?.capacity}
+                  onChange={(e) => updateField("business.capacity", e.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="unique">What Makes You Unique?</Label>
+                <Textarea
+                  id="unique"
+                  placeholder="Enter 2-3 selling points (one per line)"
+                  value={formData.business?.unique_selling_points?.join("\n")}
+                  onChange={(e) => updateField("business.unique_selling_points", e.target.value.split("\n").filter(Boolean))}
+                  rows={4}
+                />
+              </div>
+            </div>
+          )}
+
+          {step === 6 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Target Audience</h2>
+              
+              <div className="space-y-3">
+                <Label>Primary Customers</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["Families", "College students", "Young professionals", "Retirees", "Event planners", "Homeowners", "Property managers", "Small businesses", "Corporate clients"].map((audience) => (
+                    <div key={audience} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={audience}
+                        checked={formData.audience?.primary?.includes(audience.toLowerCase())}
+                        onCheckedChange={() => toggleArrayItem("audience.primary", audience.toLowerCase())}
+                      />
+                      <Label htmlFor={audience} className="cursor-pointer">{audience}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label>Social Media Platforms</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {["Instagram", "TikTok", "Facebook", "LinkedIn", "Twitter", "Pinterest"].map((platform) => (
+                    <div key={platform} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={platform}
+                        checked={formData.audience?.platforms?.includes(platform.toLowerCase())}
+                        onCheckedChange={() => toggleArrayItem("audience.platforms", platform.toLowerCase())}
+                      />
+                      <Label htmlFor={platform} className="cursor-pointer">{platform}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 7 && (
+            <div className="space-y-6">
+              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Review & Confirm</h2>
+              
+              <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                <div className="p-4 bg-secondary rounded-lg">
+                  <h3 className="font-semibold mb-2">Business</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {formData.business_name} • {formData.niche}<br />
+                    Owner: {formData.owner_name}<br />
+                    Location: {formData.business?.location}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-secondary rounded-lg">
+                  <h3 className="font-semibold mb-2">Brand Identity</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Style: {formData.brand_identity?.visual_style}<br />
+                    Personality: {formData.brand_identity?.personality?.join(", ")}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-secondary rounded-lg">
+                  <h3 className="font-semibold mb-2">Voice</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Tone: {formData.voice?.tone?.replace(/_/g, " ")}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-secondary rounded-lg">
+                  <h3 className="font-semibold mb-2">Services</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {formData.business?.services?.join(", ")}<br />
+                    Price: {formData.business?.price_point?.replace(/_/g, " ")}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-secondary rounded-lg">
+                  <h3 className="font-semibold mb-2">Audience</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {formData.audience?.primary?.join(", ")}<br />
+                    Platforms: {formData.audience?.platforms?.join(", ")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
+            {step > 1 && (
+              <Button variant="outline" onClick={handleBack}>
+                <ChevronLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            )}
+            
+            {step < 7 ? (
+              <Button onClick={handleNext} className="ml-auto">
+                Next
+                <ChevronRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : (
+              <Button onClick={handleSave} className="ml-auto bg-success hover:bg-success/90">
+                Save & Create Campaign
+              </Button>
+            )}
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+};
+
+export default Onboarding;
