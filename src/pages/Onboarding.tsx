@@ -462,14 +462,14 @@ const Onboarding = () => {
                 <div className="p-4 bg-secondary rounded-lg">
                   <h3 className="font-semibold mb-2">Voice</h3>
                   <p className="text-sm text-muted-foreground">
-                    Tone: {formData.voice?.tone?.replace(/_/g, " ")}
+                    Tones: {formData.voice?.tones?.join(", ")?.replace(/_/g, " ")}
                   </p>
                 </div>
 
                 <div className="p-4 bg-secondary rounded-lg">
                   <h3 className="font-semibold mb-2">Services</h3>
                   <p className="text-sm text-muted-foreground">
-                    {formData.business?.services?.join(", ")}<br />
+                    {formData.services?.join(", ")}<br />
                     Price: {formData.business?.price_point?.replace(/_/g, " ")}
                   </p>
                 </div>
