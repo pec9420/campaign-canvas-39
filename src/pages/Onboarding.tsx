@@ -29,10 +29,13 @@ const Onboarding = () => {
       visual_style: ""
     },
     voice: {
-      tone: "",
+      tones: [],
       loved_words: [],
       banned_words: []
     },
+    locations: [],
+    services: [],
+    programs: [],
     content_rules: {
       show_owner: true,
       show_staff: true,
@@ -41,7 +44,6 @@ const Onboarding = () => {
     },
     business: {
       location: "",
-      services: [],
       price_point: "",
       capacity: "",
       unique_selling_points: []
@@ -252,23 +254,24 @@ const Onboarding = () => {
               <h2 className="text-2xl font-semibold text-card-foreground mb-6">Voice & Tone</h2>
               
               <div className="space-y-3">
-                <Label>Tone</Label>
-                <RadioGroup
-                  value={formData.voice?.tone}
-                  onValueChange={(value) => updateField("voice.tone", value)}
-                >
+                <Label>Tone (select all that apply)</Label>
+                <div className="space-y-2">
                   {[
-                    { value: "fun_and_cheeky", label: "Fun & cheeky" },
-                    { value: "professional_but_approachable", label: "Professional & approachable" },
-                    { value: "warm_and_friendly", label: "Warm & friendly" },
-                    { value: "bold_and_edgy", label: "Bold & edgy" }
+                    { value: "fun_playful", label: "Fun & Playful" },
+                    { value: "professional_polished", label: "Professional & Polished" },
+                    { value: "warm_friendly", label: "Warm & Friendly" },
+                    { value: "bold_edgy", label: "Bold & Edgy" }
                   ].map((tone) => (
                     <div key={tone.value} className="flex items-center space-x-2">
-                      <RadioGroupItem value={tone.value} id={tone.value} />
+                      <Checkbox
+                        id={tone.value}
+                        checked={formData.voice?.tones?.includes(tone.value)}
+                        onCheckedChange={() => toggleArrayItem("voice.tones", tone.value)}
+                      />
                       <Label htmlFor={tone.value} className="cursor-pointer">{tone.label}</Label>
                     </div>
                   ))}
-                </RadioGroup>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -348,8 +351,8 @@ const Onboarding = () => {
                 <Textarea
                   id="services"
                   placeholder="Enter each service on a new line"
-                  value={formData.business?.services?.join("\n")}
-                  onChange={(e) => updateField("business.services", e.target.value.split("\n").filter(Boolean))}
+                  value={formData.services?.join("\n")}
+                  onChange={(e) => updateField("services", e.target.value.split("\n").filter(Boolean))}
                   rows={4}
                 />
               </div>

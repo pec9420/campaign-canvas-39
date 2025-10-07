@@ -267,9 +267,14 @@ const BrandHub = () => {
                 {toneOptions.map((tone) => (
                   <div
                     key={tone.id}
-                    onClick={() => updateProfile({ voice: { ...profile.voice, tone: tone.id } })}
+                    onClick={() => {
+                      const newTones = profile.voice.tones.includes(tone.id)
+                        ? profile.voice.tones.filter(t => t !== tone.id)
+                        : [...profile.voice.tones, tone.id];
+                      updateProfile({ voice: { ...profile.voice, tones: newTones } });
+                    }}
                     className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      profile.voice.tone === tone.id
+                      profile.voice.tones.includes(tone.id)
                         ? 'border-primary bg-primary/5'
                         : 'border-border hover:border-primary/50'
                     }`}
