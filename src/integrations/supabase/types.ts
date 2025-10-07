@@ -14,7 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      brand_hub_uploads: {
+        Row: {
+          created_at: string | null
+          extracted_text: string | null
+          file_name: string
+          file_size: number | null
+          file_type: string
+          file_url: string
+          id: string
+          profile_id: string
+          uploaded_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          extracted_text?: string | null
+          file_name: string
+          file_size?: number | null
+          file_type: string
+          file_url: string
+          id?: string
+          profile_id: string
+          uploaded_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          extracted_text?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_type?: string
+          file_url?: string
+          id?: string
+          profile_id?: string
+          uploaded_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
