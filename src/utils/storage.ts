@@ -19,7 +19,6 @@ export const saveProfile = async (profile: BusinessProfile): Promise<void> => {
         brand_identity: profile.brand_identity as any,
         voice: profile.voice as any,
         content_rules: profile.content_rules as any,
-        business: profile.business as any,
         personas: profile.personas as any,
         audience: profile.audience as any,
       });

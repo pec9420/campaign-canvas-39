@@ -726,10 +726,10 @@ Single image: Text overlay on high-quality ice cream photo
 **Hook:** "Meet ${profile.business_name} 👋"
 
 **Caption:**
-We're ${profile.business_name}, your ${profile.business.location} ${profile.niche}.
+We're ${profile.business_name}, your ${profile.locations?.[0] || "local"} ${profile.niche}.
 
 What makes us different? 
-${profile.business.unique_selling_points.map((p: string) => `✨ ${p}`).join("\n")}
+${profile.services.slice(0, 3).map((p: string) => `✨ ${p}`).join("\n")}
 
 Ready to work together? Link in bio!
 

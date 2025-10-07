@@ -61,7 +61,7 @@ export function Navigation({ profile, onSwitchBusiness }: NavigationProps) {
                 {profile.business_name}
               </p>
               <p className="text-xs text-muted-foreground truncate">
-                {profile.business.location}
+                {profile.locations?.[0] || "No location"}
               </p>
             </div>
           </div>

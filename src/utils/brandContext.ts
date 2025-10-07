@@ -50,10 +50,7 @@ ${profile.programs
   )
   .join("\n")}
 
-# BUSINESS DETAILS
-Price Point: ${profile.business.price_point}
-Capacity: ${profile.business.capacity}
-Unique Selling Points: ${profile.business.unique_selling_points.join(", ")}
+# AUDIENCE
 Primary Audience: ${profile.audience.primary.join(", ")}
 Platforms: ${profile.audience.platforms.join(", ")}
   `.trim();

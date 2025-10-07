@@ -42,12 +42,6 @@ const Onboarding = () => {
       show_customers: true,
       topics_to_avoid: []
     },
-    business: {
-      location: "",
-      price_point: "",
-      capacity: "",
-      unique_selling_points: []
-    },
     audience: {
       primary: [],
       platforms: []
@@ -67,7 +61,7 @@ const Onboarding = () => {
   }, [profileId, navigate]);
 
   const handleNext = () => {
-    if (step < 7) setStep(step + 1);
+    if (step < 6) setStep(step + 1);
   };
 
   const handleBack = () => {
@@ -113,9 +107,8 @@ const Onboarding = () => {
     { id: 2, title: "Brand", description: "Identity" },
     { id: 3, title: "Voice", description: "Tone & style" },
     { id: 4, title: "Content", description: "Rules" },
-    { id: 5, title: "Details", description: "Services" },
-    { id: 6, title: "Audience", description: "Target" },
-    { id: 7, title: "Review", description: "Confirm" }
+    { id: 5, title: "Audience", description: "Target" },
+    { id: 6, title: "Review", description: "Confirm" }
   ];
 
   return (
@@ -175,16 +168,6 @@ const Onboarding = () => {
                   value={formData.owner_name}
                   onChange={(e) => updateField("owner_name", e.target.value)}
                   placeholder="Your name"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={formData.business?.location}
-                  onChange={(e) => updateField("business.location", e.target.value)}
-                  placeholder="City, State"
                 />
               </div>
             </div>
@@ -345,63 +328,6 @@ const Onboarding = () => {
             </div>
           )}
 
-          {step === 5 && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Business Details</h2>
-              
-              <div className="space-y-2">
-                <Label htmlFor="services">Services Offered</Label>
-                <Textarea
-                  id="services"
-                  placeholder="Enter each service on a new line"
-                  value={formData.services?.join("\n")}
-                  onChange={(e) => updateField("services", e.target.value.split("\n").filter(Boolean))}
-                  rows={4}
-                />
-              </div>
-
-              <div className="space-y-3">
-                <Label>Price Point</Label>
-                <RadioGroup
-                  value={formData.business?.price_point}
-                  onValueChange={(value) => updateField("business.price_point", value)}
-                >
-                  {[
-                    { value: "budget", label: "Budget $" },
-                    { value: "mid_range", label: "Mid-range $$" },
-                    { value: "premium", label: "Premium $$$" }
-                  ].map((price) => (
-                    <div key={price.value} className="flex items-center space-x-2">
-                      <RadioGroupItem value={price.value} id={price.value} />
-                      <Label htmlFor={price.value} className="cursor-pointer">{price.label}</Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="capacity">Capacity/Constraints</Label>
-                <Input
-                  id="capacity"
-                  placeholder="e.g., 4 events per weekend max"
-                  value={formData.business?.capacity}
-                  onChange={(e) => updateField("business.capacity", e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="unique">What Makes You Unique?</Label>
-                <Textarea
-                  id="unique"
-                  placeholder="Enter 2-3 selling points (one per line)"
-                  value={formData.business?.unique_selling_points?.join("\n")}
-                  onChange={(e) => updateField("business.unique_selling_points", e.target.value.split("\n").filter(Boolean))}
-                  rows={4}
-                />
-              </div>
-            </div>
-          )}
-
           {step === 6 && (
             <div className="space-y-6">
               <h2 className="text-2xl font-semibold text-card-foreground mb-6">Target Audience</h2>
@@ -450,7 +376,7 @@ const Onboarding = () => {
                   <p className="text-sm text-muted-foreground">
                     {formData.business_name} • {formData.niche}<br />
                     Owner: {formData.owner_name}<br />
-                    Location: {formData.business?.location}
+                    Locations: {formData.locations?.join(", ") || "Not set"}
                   </p>
                 </div>
 
@@ -472,8 +398,7 @@ const Onboarding = () => {
                 <div className="p-4 bg-secondary rounded-lg">
                   <h3 className="font-semibold mb-2">Services</h3>
                   <p className="text-sm text-muted-foreground">
-                    {formData.services?.join(", ")}<br />
-                    Price: {formData.business?.price_point?.replace(/_/g, " ")}
+                    {formData.services?.join(", ") || "Not set"}
                   </p>
                 </div>
 
@@ -501,7 +426,7 @@ const Onboarding = () => {
               </Button>
             )}
 
-            {step < 7 ? (
+            {step < 6 ? (
               <Button onClick={handleNext} size="lg" className="px-8">
                 Continue
                 <ChevronRight className="w-4 h-4 ml-2" />

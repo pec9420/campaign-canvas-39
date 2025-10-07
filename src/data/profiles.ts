@@ -61,13 +61,6 @@ export interface BusinessProfile {
     topics_to_avoid: string[];
   };
 
-  business: {
-    location: string; // Legacy field for backwards compatibility
-    price_point: string;
-    capacity: string;
-    unique_selling_points: string[];
-  };
-
   // Target Personas
   personas: Persona[];
 
@@ -118,16 +111,6 @@ export const PRELOADED_PROFILES: Record<string, BusinessProfile> = {
       show_staff: true,
       show_customers: true,
       topics_to_avoid: []
-    },
-    business: {
-      location: "Springfield, IL",
-      price_point: "mid_range",
-      capacity: "4 catering events per weekend max",
-      unique_selling_points: [
-        "Pop-art aesthetic",
-        "Local flavor collaborations",
-        "Nostalgic vibe"
-      ]
     },
     personas: [
       {
@@ -183,17 +166,6 @@ export const PRELOADED_PROFILES: Record<string, BusinessProfile> = {
       show_customers: true,
       topics_to_avoid: []
     },
-    business: {
-      location: "Denver, CO",
-      price_point: "mid_to_premium",
-      capacity: "24/7 emergency service, 5 crews",
-      unique_selling_points: [
-        "Same-day service",
-        "Upfront pricing",
-        "Licensed & insured",
-        "20+ years experience"
-      ]
-    },
     personas: [],
     audience: {
       primary: ["homeowners", "property_managers", "small_businesses"],
@@ -223,12 +195,6 @@ export const PRELOADED_PROFILES: Record<string, BusinessProfile> = {
       show_staff: true,
       show_customers: true,
       topics_to_avoid: []
-    },
-    business: {
-      location: "",
-      price_point: "",
-      capacity: "",
-      unique_selling_points: []
     },
     personas: [],
     audience: {

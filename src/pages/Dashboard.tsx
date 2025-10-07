@@ -457,10 +457,10 @@ const Dashboard = () => {
                 </div>
 
                 <div className="text-center">
-                  <p className="font-medium text-foreground mb-1 capitalize">
-                    {profile.business.price_point}
+                  <p className="font-medium text-foreground mb-1">
+                    {profile.personas?.length || 0}
                   </p>
-                  <p className="text-sm text-muted-foreground">Price Point</p>
+                  <p className="text-sm text-muted-foreground">Personas</p>
                 </div>
               </div>
             </Card>

@@ -54,7 +54,6 @@ export type Database = {
         Row: {
           audience: Json | null
           brand_identity: Json | null
-          business: Json | null
           business_name: string
           content_rules: Json | null
           created_at: string | null
@@ -71,7 +70,6 @@ export type Database = {
         Insert: {
           audience?: Json | null
           brand_identity?: Json | null
-          business?: Json | null
           business_name: string
           content_rules?: Json | null
           created_at?: string | null
@@ -88,7 +86,6 @@ export type Database = {
         Update: {
           audience?: Json | null
           brand_identity?: Json | null
-          business?: Json | null
           business_name?: string
           content_rules?: Json | null
           created_at?: string | null
