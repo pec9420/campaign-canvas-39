@@ -10,6 +10,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
 import { PersonaModal } from "@/components/PersonaModal";
+import { FileUploadModal } from "@/components/FileUploadModal";
+import { ReviewSuggestionsModal } from "@/components/ReviewSuggestionsModal";
 import { getCurrentProfile, saveProfile } from "@/utils/storage";
 import { BusinessProfile, Program, Persona } from "@/data/profiles";
 import {
@@ -92,6 +94,14 @@ const BrandHubNew = () => {
   // Persona modal state
   const [showPersonaModal, setShowPersonaModal] = useState(false);
   const [currentPersona, setCurrentPersona] = useState<Persona | null>(null);
+
+  // File upload modal state
+  const [showUploadModal, setShowUploadModal] = useState(false);
+  const [uploadFileType, setUploadFileType] = useState<"business_info" | "brand_voice" | "persona_research">("business_info");
+  
+  // Review suggestions modal state
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
 
   useEffect(() => {
     const loadedProfile = getCurrentProfile();
@@ -331,10 +341,17 @@ const BrandHubNew = () => {
               <Building2 className="w-6 h-6 text-primary" />
               <h2 className="text-2xl font-bold">Business Basics</h2>
             </div>
-            <Button variant="outline" size="sm">
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Business Info
-            </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setUploadFileType("business_info");
+                  setShowUploadModal(true);
+                }}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload Business Info
+              </Button>
           </div>
 
           <div className="space-y-6">
