@@ -3,28 +3,36 @@ import { Plus } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PRELOADED_PROFILES } from "@/data/profiles";
-import { saveProfile } from "@/utils/storage";
+import { saveProfile, getProfile } from "@/utils/storage";
 import { useState } from "react";
 
 const Landing = () => {
   const navigate = useNavigate();
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
-  const handleSelectUser = (profileId: string) => {
+  const handleSelectUser = async (profileId: string) => {
     const profile = PRELOADED_PROFILES[profileId];
     console.log("Landing - Selected user:", profileId, "Profile:", profile);
 
     if (profile.reset_on_load) {
       // Test user always starts fresh
-      saveProfile(profile);
+      await saveProfile(profile);
       console.log("Landing - Navigating to onboarding with profileId:", profileId);
       navigate("/onboarding", { state: { profileId } });
-    } else {
-      // Existing profiles go to dashboard
-      saveProfile(profile);
-      console.log("Landing - Navigating to dashboard with profileId:", profileId);
-      navigate("/dashboard", { state: { profileId } });
+      return;
     }
+
+    // Only seed the default profile if it doesn't exist yet
+    const existing = await getProfile(profileId);
+    if (!existing) {
+      await saveProfile(profile);
+    } else {
+      // Just switch context to the existing profile without overwriting it
+      localStorage.setItem("current_profile_id", profileId);
+    }
+
+    console.log("Landing - Navigating to dashboard with profileId:", profileId);
+    navigate("/dashboard", { state: { profileId } });
   };
 
   const handleNewBusiness = () => {
