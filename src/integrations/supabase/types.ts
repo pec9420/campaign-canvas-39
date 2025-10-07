@@ -50,6 +50,60 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_profiles: {
+        Row: {
+          audience: Json | null
+          brand_identity: Json | null
+          business: Json | null
+          business_name: string
+          content_rules: Json | null
+          created_at: string | null
+          id: string
+          locations: string[] | null
+          niche: string | null
+          owner_name: string | null
+          personas: Json | null
+          programs: Json | null
+          services: string[] | null
+          updated_at: string | null
+          voice: Json | null
+        }
+        Insert: {
+          audience?: Json | null
+          brand_identity?: Json | null
+          business?: Json | null
+          business_name: string
+          content_rules?: Json | null
+          created_at?: string | null
+          id: string
+          locations?: string[] | null
+          niche?: string | null
+          owner_name?: string | null
+          personas?: Json | null
+          programs?: Json | null
+          services?: string[] | null
+          updated_at?: string | null
+          voice?: Json | null
+        }
+        Update: {
+          audience?: Json | null
+          brand_identity?: Json | null
+          business?: Json | null
+          business_name?: string
+          content_rules?: Json | null
+          created_at?: string | null
+          id?: string
+          locations?: string[] | null
+          niche?: string | null
+          owner_name?: string | null
+          personas?: Json | null
+          programs?: Json | null
+          services?: string[] | null
+          updated_at?: string | null
+          voice?: Json | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
