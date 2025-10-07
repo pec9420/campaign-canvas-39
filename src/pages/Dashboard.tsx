@@ -6,37 +6,31 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
-import { getProfile, getCampaignsByProfile, saveCampaign, clearAllCampaigns } from "@/utils/storage";
+import { getCurrentProfile, getCampaignsByProfile, saveCampaign, clearAllCampaigns } from "@/utils/storage";
 import { generateMockCampaign } from "@/data/mockCampaigns";
 import { BusinessProfile } from "@/data/profiles";
-import { Sparkles, TrendingUp, Calendar, Palette, Target, CheckCircle, Clock, Users } from "lucide-react";
+import { Sparkles, TrendingUp, Calendar, Palette, Target, CheckCircle, Clock } from "lucide-react";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const profileId = location.state?.profileId;
 
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
   const [goal, setGoal] = useState("");
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [calendarView, setCalendarView] = useState<'weekly' | 'monthly'>('weekly');
 
-  console.log("Dashboard - ProfileId:", profileId, "Location state:", location.state);
-
   useEffect(() => {
-    if (!profileId) {
-      console.log("Dashboard - No profileId, redirecting to home");
-      navigate("/");
-      return;
-    }
+    // Get profile from location state or fallback to current/default profile
+    const loadedProfile = getCurrentProfile();
 
-    const loadedProfile = getProfile(profileId);
     if (!loadedProfile) {
       navigate("/");
       return;
     }
 
     setProfile(loadedProfile);
+    const profileId = loadedProfile.id;
 
     // One-time cleanup for existing duplicates and add new campaigns
     const cleanupDone = localStorage.getItem('cleanup_duplicates_v2_done');
@@ -87,14 +81,12 @@ const Dashboard = () => {
     }
 
     setCampaigns(profileCampaigns);
-  }, [profileId, navigate]);
+  }, [navigate]);
 
   const handleCreateCampaign = () => {
-    if (!goal.trim()) return;
-    console.log("Dashboard - Creating campaign with profileId:", profileId, "goal:", goal);
-    // Use URL parameters instead of navigation state for better reliability
+    if (!goal.trim() || !profile) return;
     const encodedGoal = encodeURIComponent(goal);
-    navigate(`/campaign?profileId=${profileId}&goal=${encodedGoal}`);
+    navigate(`/campaign?profileId=${profile.id}&goal=${encodedGoal}`);
   };
 
   const handleQuickGoal = (quickGoal: string) => {
@@ -274,7 +266,7 @@ const Dashboard = () => {
                         <Button
                           variant="ghost"
                           className="w-full"
-                          onClick={() => navigate("/campaigns", { state: { profileId } })}
+                          onClick={() => navigate("/campaigns")}
                         >
                           View All Campaigns ({campaigns.length})
                         </Button>
@@ -449,14 +441,14 @@ const Dashboard = () => {
 
                 <div className="text-center">
                   <p className="font-medium text-foreground mb-1 capitalize">
-                    {profile.voice.tone}
+                    {profile.voice.tones?.join(", ") || "Not set"}
                   </p>
                   <p className="text-sm text-muted-foreground">Voice Tone</p>
                 </div>
 
                 <div className="text-center">
                   <p className="font-medium text-foreground mb-1">
-                    {profile.business.services.length}
+                    {profile.services?.length || 0}
                   </p>
                   <p className="text-sm text-muted-foreground">Services</p>
                 </div>
