@@ -1,39 +1,85 @@
 import { BusinessProfile, PRELOADED_PROFILES } from "@/data/profiles";
+import { supabase } from "@/integrations/supabase/client";
 
-const STORAGE_KEY = "campaign_generator_profiles";
 const CAMPAIGNS_KEY = "campaign_generator_campaigns";
 const CURRENT_PROFILE_KEY = "current_profile_id";
 
-export const saveProfile = (profile: BusinessProfile) => {
-  const profiles = getAllProfiles();
-  profiles[profile.id] = profile;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(profiles));
-  // Set as current profile
-  localStorage.setItem(CURRENT_PROFILE_KEY, profile.id);
+export const saveProfile = async (profile: BusinessProfile): Promise<void> => {
+  try {
+    const { error } = await supabase
+      .from('brand_profiles')
+      .upsert({
+        id: profile.id,
+        business_name: profile.business_name,
+        niche: profile.niche || null,
+        owner_name: profile.owner_name || null,
+        locations: profile.locations || [],
+        services: profile.services || [],
+        programs: profile.programs as any,
+        brand_identity: profile.brand_identity as any,
+        voice: profile.voice as any,
+        content_rules: profile.content_rules as any,
+        business: profile.business as any,
+        personas: profile.personas as any,
+        audience: profile.audience as any,
+      });
+
+    if (error) throw error;
+    localStorage.setItem(CURRENT_PROFILE_KEY, profile.id);
+  } catch (error) {
+    console.error("Error saving profile:", error);
+    throw error;
+  }
 };
 
-export const getProfile = (id: string): BusinessProfile | null => {
-  const profiles = getAllProfiles();
-  return profiles[id] || null;
+export const getProfile = async (id: string): Promise<BusinessProfile | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('brand_profiles')
+      .select('*')
+      .eq('id', id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as unknown as BusinessProfile | null;
+  } catch (error) {
+    console.error("Error loading profile:", error);
+    return null;
+  }
 };
 
-export const getAllProfiles = (): Record<string, BusinessProfile> => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : {};
+export const getAllProfiles = async (): Promise<Record<string, BusinessProfile>> => {
+  try {
+    const { data, error } = await supabase
+      .from('brand_profiles')
+      .select('*');
+
+    if (error) throw error;
+
+    const profiles: Record<string, BusinessProfile> = {};
+    (data || []).forEach((profile: any) => {
+      profiles[profile.id] = profile as unknown as BusinessProfile;
+    });
+    return profiles;
+  } catch (error) {
+    console.error("Error loading profiles:", error);
+    return {};
+  }
 };
 
 export const getCurrentProfileId = (): string | null => {
   return localStorage.getItem(CURRENT_PROFILE_KEY);
 };
 
-export const getCurrentProfile = (): BusinessProfile | null => {
+export const getCurrentProfile = async (): Promise<BusinessProfile | null> => {
   const currentId = getCurrentProfileId();
   if (currentId) {
-    return getProfile(currentId);
+    const profile = await getProfile(currentId);
+    if (profile) return profile;
   }
 
   // Fallback: get first available profile or use stack_creamery
-  const profiles = getAllProfiles();
+  const profiles = await getAllProfiles();
   const profileIds = Object.keys(profiles);
 
   if (profileIds.length > 0) {
@@ -44,7 +90,7 @@ export const getCurrentProfile = (): BusinessProfile | null => {
 
   // Last resort: load stack_creamery from preloaded profiles
   const defaultProfile = PRELOADED_PROFILES.stack_creamery;
-  saveProfile(defaultProfile);
+  await saveProfile(defaultProfile);
   return defaultProfile;
 };
 

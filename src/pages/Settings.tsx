@@ -12,18 +12,21 @@ const Settings = () => {
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
 
   useEffect(() => {
-    if (!profileId) {
-      navigate("/");
-      return;
-    }
+    const loadProfile = async () => {
+      if (!profileId) {
+        navigate("/");
+        return;
+      }
 
-    const loadedProfile = getProfile(profileId);
-    if (!loadedProfile) {
-      navigate("/");
-      return;
-    }
+      const loadedProfile = await getProfile(profileId);
+      if (!loadedProfile) {
+        navigate("/");
+        return;
+      }
 
-    setProfile(loadedProfile);
+      setProfile(loadedProfile);
+    };
+    loadProfile();
   }, [profileId, navigate]);
 
   const handleSwitchBusiness = () => {

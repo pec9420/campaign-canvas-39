@@ -104,12 +104,15 @@ const BrandHubNew = () => {
   const [aiSuggestions, setAiSuggestions] = useState<any>(null);
 
   useEffect(() => {
-    const loadedProfile = getCurrentProfile();
-    if (!loadedProfile) {
-      navigate("/");
-      return;
-    }
-    setProfile(loadedProfile);
+    const loadProfile = async () => {
+      const loadedProfile = await getCurrentProfile();
+      if (!loadedProfile) {
+        navigate("/");
+        return;
+      }
+      setProfile(loadedProfile);
+    };
+    loadProfile();
   }, [navigate]);
 
   // Auto-save every 30 seconds if there are changes
@@ -127,12 +130,17 @@ const BrandHubNew = () => {
     navigate("/");
   };
 
-  const handleSave = (isAutoSave = false) => {
+  const handleSave = async (isAutoSave = false) => {
     if (profile) {
-      saveProfile(profile);
-      setHasChanges(false);
-      setLastSaved(new Date());
-      toast.success(isAutoSave ? "Auto-saved" : "Brand profile saved successfully!");
+      try {
+        await saveProfile(profile);
+        setHasChanges(false);
+        setLastSaved(new Date());
+        toast.success(isAutoSave ? "Auto-saved" : "Brand profile saved successfully!");
+      } catch (error) {
+        toast.error("Failed to save profile. Please try again.");
+        console.error("Save error:", error);
+      }
     }
   };
 

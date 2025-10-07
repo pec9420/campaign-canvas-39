@@ -21,66 +21,69 @@ const Dashboard = () => {
   const [calendarView, setCalendarView] = useState<'weekly' | 'monthly'>('weekly');
 
   useEffect(() => {
-    // Get profile from location state or fallback to current/default profile
-    const loadedProfile = getCurrentProfile();
+    const loadProfile = async () => {
+      // Get profile from location state or fallback to current/default profile
+      const loadedProfile = await getCurrentProfile();
 
-    if (!loadedProfile) {
-      navigate("/");
-      return;
-    }
-
-    setProfile(loadedProfile);
-    const profileId = loadedProfile.id;
-
-    // One-time cleanup for existing duplicates and add new campaigns
-    const cleanupDone = localStorage.getItem('cleanup_duplicates_v2_done');
-    if (!cleanupDone && profileId === "stack_creamery") {
-      clearAllCampaigns();
-      localStorage.removeItem('stack_creamery_campaigns_initialized');
-      localStorage.setItem('cleanup_duplicates_v2_done', 'true');
-    }
-
-    // Load campaigns for this profile
-    let profileCampaigns = getCampaignsByProfile(profileId);
-
-    // For Stack Creamery, ensure we have exactly one sample campaign
-    if (profileId === "stack_creamery") {
-      const hasInitialized = localStorage.getItem(`${profileId}_campaigns_initialized`);
-
-      if (!hasInitialized) {
-        // Clear any existing campaigns and create fresh ones
-        clearAllCampaigns();
-
-        // Create first sample campaign (completed)
-        const completedCampaign = generateMockCampaign("boost catering orders", loadedProfile);
-        const completedCampaignWithMeta = {
-          ...completedCampaign,
-          goal: "Boost catering orders for summer events",
-          status: "completed",
-          created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days ago
-        };
-        saveCampaign(profileId, completedCampaignWithMeta);
-
-        // Create second sample campaign (in progress)
-        const inProgressCampaign = generateMockCampaign("increase foot traffic", loadedProfile);
-        // Modify the title for the in-progress campaign
-        inProgressCampaign.strategy.overview.title = "Stack Creamery Holiday Promotion Campaign";
-        const inProgressCampaignWithMeta = {
-          ...inProgressCampaign,
-          goal: "Increase foot traffic during holiday season",
-          status: "in_progress",
-          created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
-        };
-        saveCampaign(profileId, inProgressCampaignWithMeta);
-
-        // Mark as initialized to prevent future duplicates
-        localStorage.setItem(`${profileId}_campaigns_initialized`, 'true');
-
-        profileCampaigns = getCampaignsByProfile(profileId);
+      if (!loadedProfile) {
+        navigate("/");
+        return;
       }
-    }
 
-    setCampaigns(profileCampaigns);
+      setProfile(loadedProfile);
+      const profileId = loadedProfile.id;
+
+      // One-time cleanup for existing duplicates and add new campaigns
+      const cleanupDone = localStorage.getItem('cleanup_duplicates_v2_done');
+      if (!cleanupDone && profileId === "stack_creamery") {
+        clearAllCampaigns();
+        localStorage.removeItem('stack_creamery_campaigns_initialized');
+        localStorage.setItem('cleanup_duplicates_v2_done', 'true');
+      }
+
+      // Load campaigns for this profile
+      let profileCampaigns = getCampaignsByProfile(profileId);
+
+      // For Stack Creamery, ensure we have exactly one sample campaign
+      if (profileId === "stack_creamery") {
+        const hasInitialized = localStorage.getItem(`${profileId}_campaigns_initialized`);
+
+        if (!hasInitialized) {
+          // Clear any existing campaigns and create fresh ones
+          clearAllCampaigns();
+
+          // Create first sample campaign (completed)
+          const completedCampaign = generateMockCampaign("boost catering orders", loadedProfile);
+          const completedCampaignWithMeta = {
+            ...completedCampaign,
+            goal: "Boost catering orders for summer events",
+            status: "completed",
+            created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days ago
+          };
+          saveCampaign(profileId, completedCampaignWithMeta);
+
+          // Create second sample campaign (in progress)
+          const inProgressCampaign = generateMockCampaign("increase foot traffic", loadedProfile);
+          // Modify the title for the in-progress campaign
+          inProgressCampaign.strategy.overview.title = "Stack Creamery Holiday Promotion Campaign";
+          const inProgressCampaignWithMeta = {
+            ...inProgressCampaign,
+            goal: "Increase foot traffic during holiday season",
+            status: "in_progress",
+            created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
+          };
+          saveCampaign(profileId, inProgressCampaignWithMeta);
+
+          // Mark as initialized to prevent future duplicates
+          localStorage.setItem(`${profileId}_campaigns_initialized`, 'true');
+
+          profileCampaigns = getCampaignsByProfile(profileId);
+        }
+      }
+
+      setCampaigns(profileCampaigns);
+    };
+    loadProfile();
   }, [navigate]);
 
   const handleCreateCampaign = () => {
