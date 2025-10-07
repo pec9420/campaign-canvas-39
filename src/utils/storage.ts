@@ -46,3 +46,12 @@ export const getAllCampaigns = (): Record<string, any[]> => {
   const stored = localStorage.getItem(CAMPAIGNS_KEY);
   return stored ? JSON.parse(stored) : {};
 };
+
+export const getCampaignsByProfile = (profileId: string): any[] => {
+  const campaigns = getAllCampaigns();
+  return campaigns[profileId] || [];
+};
+
+export const clearAllCampaigns = () => {
+  localStorage.removeItem(CAMPAIGNS_KEY);
+};

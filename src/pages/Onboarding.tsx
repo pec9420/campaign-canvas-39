@@ -7,9 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card } from "@/components/ui/card";
+import { ProgressStepper } from "@/components/ui/progress-stepper";
 import { saveProfile, getProfile } from "@/utils/storage";
 import { BusinessProfile } from "@/data/profiles";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Building2, Palette, MessageSquare, Users, MapPin, Target, CheckCircle2 } from "lucide-react";
 
 const Onboarding = () => {
   const navigate = useNavigate();
@@ -102,26 +103,45 @@ const Onboarding = () => {
     updateField(path, newArray);
   };
 
+  const steps = [
+    { id: 1, title: "Business", description: "Basic info" },
+    { id: 2, title: "Brand", description: "Identity" },
+    { id: 3, title: "Voice", description: "Tone & style" },
+    { id: 4, title: "Content", description: "Rules" },
+    { id: 5, title: "Details", description: "Services" },
+    { id: 6, title: "Audience", description: "Target" },
+    { id: 7, title: "Review", description: "Confirm" }
+  ];
+
   return (
     <div className="min-h-screen bg-background py-12 px-6">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl font-bold text-foreground">Business Setup</h1>
-            <span className="text-muted-foreground">Step {step} of 7</span>
-          </div>
-          <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${(step / 7) * 100}%` }}
-            />
-          </div>
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Set Up Your Business Profile
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Help us understand your business so we can create the perfect social media campaigns for you.
+          </p>
         </div>
 
-        <Card className="p-8 bg-card border-border">
+        {/* Progress Stepper */}
+        <div className="mb-16">
+          <ProgressStepper steps={steps} currentStep={step} />
+        </div>
+
+        {/* Main Content Card */}
+        <Card className="max-w-2xl mx-auto p-8 bg-card border-border shadow-lg">
           {step === 1 && (
             <div className="space-y-6">
-              <h2 className="text-2xl font-semibold text-card-foreground mb-6">Business Basics</h2>
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Building2 className="w-8 h-8 text-primary" />
+                </div>
+                <h2 className="text-2xl font-bold text-card-foreground mb-2">Business Basics</h2>
+                <p className="text-muted-foreground">Let's start with the essentials about your business</p>
+              </div>
               
               <div className="space-y-2">
                 <Label htmlFor="business_name">Business Name</Label>
@@ -462,22 +482,28 @@ const Onboarding = () => {
             </div>
           )}
 
+          {/* Navigation */}
           <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
-            {step > 1 && (
-              <Button variant="outline" onClick={handleBack}>
+            {step > 1 ? (
+              <Button variant="outline" onClick={handleBack} size="lg">
                 <ChevronLeft className="w-4 h-4 mr-2" />
                 Back
               </Button>
+            ) : (
+              <Button variant="ghost" onClick={() => navigate("/")} size="lg">
+                ← Return Home
+              </Button>
             )}
-            
+
             {step < 7 ? (
-              <Button onClick={handleNext} className="ml-auto">
-                Next
+              <Button onClick={handleNext} size="lg" className="px-8">
+                Continue
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             ) : (
-              <Button onClick={handleSave} className="ml-auto bg-success hover:bg-success/90">
-                Save & Create Campaign
+              <Button onClick={handleSave} size="lg" className="bg-success hover:bg-success/90 px-8">
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Complete Setup
               </Button>
             )}
           </div>

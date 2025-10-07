@@ -1,15 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { useLocation, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getProfile, saveCampaign } from "@/utils/storage";
 import { generateMockCampaign } from "@/data/mockCampaigns";
-import { Loader2, Copy, Download, Sparkles, FileText, MessageSquare, Image, ArrowLeft, ExternalLink } from "lucide-react";
+import { Sparkles, ArrowLeft, Download, Copy, FileText, MessageSquare, Image } from "lucide-react";
 import { toast } from "sonner";
 
-const Campaign = () => {
+const CampaignWorking = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -22,7 +22,7 @@ const Campaign = () => {
   const [loadingStep, setLoadingStep] = useState(1);
   const [campaign, setCampaign] = useState<any>(null);
 
-  console.log("Campaign component mounted. ProfileId:", profileId, "Goal:", goal, "URL params:", location.search);
+  console.log("CampaignWorking - ProfileId:", profileId, "Goal:", goal);
 
   useEffect(() => {
     if (!profileId || !goal) {
@@ -33,6 +33,7 @@ const Campaign = () => {
 
     const profile = getProfile(profileId);
     if (!profile) {
+      console.log("Profile not found, redirecting to home");
       navigate("/");
       return;
     }
@@ -42,23 +43,27 @@ const Campaign = () => {
       try {
         // Agent 1
         setLoadingStep(1);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Agent 2
         setLoadingStep(2);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Agent 3
         setLoadingStep(3);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Generate mock campaign
         const mockCampaign = generateMockCampaign(goal, profile);
-        console.log("Generated campaign:", mockCampaign); // Debug log
+        console.log("Generated campaign:", mockCampaign);
 
         if (mockCampaign && mockCampaign.strategy) {
           setCampaign(mockCampaign);
           saveCampaign(profileId, { goal, ...mockCampaign });
+          // Show success toast
+          toast.success("Your campaign is now ready! 🎉", {
+            duration: 4000,
+          });
         } else {
           console.error("Invalid campaign data generated");
         }
@@ -105,23 +110,6 @@ const Campaign = () => {
       }
     ];
 
-    const funMessages = [
-      "Brewing viral content...",
-      "Making your competitors jealous...",
-      "Channeling social media magic...",
-      "Crafting scroll-stopping posts...",
-      "Building your brand empire..."
-    ];
-
-    const [currentMessage, setCurrentMessage] = useState(0);
-
-    useEffect(() => {
-      const interval = setInterval(() => {
-        setCurrentMessage(prev => (prev + 1) % funMessages.length);
-      }, 3000);
-      return () => clearInterval(interval);
-    }, []);
-
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-purple-500/5 to-background flex items-center justify-center p-6">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
@@ -145,8 +133,8 @@ const Campaign = () => {
               <h2 className="text-2xl font-bold text-foreground mb-2">
                 Creating Your Campaign
               </h2>
-              <p className="text-lg text-muted-foreground transition-all duration-500">
-                {funMessages[currentMessage]}
+              <p className="text-lg text-muted-foreground">
+                Channeling social media magic...
               </p>
             </div>
 
@@ -187,7 +175,7 @@ const Campaign = () => {
   }
 
   if (!campaign) {
-    console.log("Campaign is null/undefined. Loading:", loading); // Debug log
+    console.log("Campaign is null/undefined. Loading:", loading);
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <Card className="p-12 max-w-md w-full text-center">
@@ -197,7 +185,7 @@ const Campaign = () => {
     );
   }
 
-  console.log("Rendering campaign results with data:", campaign); // Debug log
+  console.log("Rendering campaign results with data:", campaign);
 
   const profile = getProfile(profileId);
 
@@ -226,7 +214,7 @@ const Campaign = () => {
               </Button>
             </div>
             <h1 className="text-3xl font-bold text-foreground mb-2">
-              Your Campaign is Ready! 🎉
+              {campaign.strategy?.overview?.title || "Campaign Results"}
             </h1>
             <p className="text-lg text-muted-foreground">
               <span className="font-medium">Goal:</span> {goal}
@@ -269,58 +257,99 @@ const Campaign = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="p-4 bg-secondary rounded-lg">
                       <div className="text-sm text-muted-foreground mb-1">Title</div>
-                      <div className="font-semibold">{campaign.strategy.overview.title}</div>
+                      <div className="font-semibold">{campaign.strategy?.overview?.title || "No title"}</div>
                     </div>
                     <div className="p-4 bg-secondary rounded-lg">
                       <div className="text-sm text-muted-foreground mb-1">Objective</div>
-                      <div className="font-semibold">{campaign.strategy.overview.objective}</div>
+                      <div className="font-semibold">{campaign.strategy?.overview?.objective || "No objective"}</div>
                     </div>
                     <div className="p-4 bg-secondary rounded-lg">
-                      <div className="text-sm text-muted-foreground mb-1">Duration</div>
-                      <div className="font-semibold">{campaign.strategy.overview.duration}</div>
+                      <div className="text-sm text-muted-foreground mb-1">Campaign Dates</div>
+                      <div className="font-semibold">
+                        {campaign.strategy?.overview?.start_date && campaign.strategy?.overview?.end_date ?
+                          `${new Date(campaign.strategy.overview.start_date).toLocaleDateString()} - ${new Date(campaign.strategy.overview.end_date).toLocaleDateString()}` :
+                          "No dates set"
+                        }
+                      </div>
                     </div>
                     <div className="p-4 bg-secondary rounded-lg">
                       <div className="text-sm text-muted-foreground mb-1">Target Audience</div>
-                      <div className="font-semibold">{campaign.strategy.overview.target_audience}</div>
+                      <div className="font-semibold">{campaign.strategy?.overview?.target_audience || "No audience"}</div>
                     </div>
                   </div>
                 </div>
 
+                {/* Content Schedule */}
                 <div>
-                  <h3 className="text-xl font-bold mb-4">Conversion Funnel</h3>
-                  <div className="space-y-3">
-                    {campaign.strategy.funnel.map((stage: any, i: number) => (
-                      <div key={i} className="p-4 bg-secondary rounded-lg">
-                        <div className="font-semibold mb-2">{stage.stage}</div>
-                        <div className="text-sm text-muted-foreground">{stage.description}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-xl font-bold mb-4">Post Outline</h3>
+                  <h3 className="text-xl font-bold mb-4">Content Schedule</h3>
                   <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full border-collapse">
                       <thead>
                         <tr className="border-b border-border">
-                          <th className="text-left py-3 px-4 font-semibold">Day</th>
-                          <th className="text-left py-3 px-4 font-semibold">Platform</th>
-                          <th className="text-left py-3 px-4 font-semibold">Format</th>
-                          <th className="text-left py-3 px-4 font-semibold">Stage</th>
-                          <th className="text-left py-3 px-4 font-semibold">Goal</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Date</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Platform</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Format</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Stage</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Goal</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Description</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Purpose</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">Persona</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">CTA</th>
+                          <th className="text-left py-3 px-4 font-semibold text-sm">KPI</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {campaign.strategy.post_outline.map((post: any, i: number) => (
-                          <tr key={i} className="border-b border-border">
-                            <td className="py-3 px-4">{post.day}</td>
-                            <td className="py-3 px-4">{post.platform}</td>
-                            <td className="py-3 px-4">{post.format}</td>
-                            <td className="py-3 px-4">{post.stage}</td>
-                            <td className="py-3 px-4">{post.goal}</td>
+                        {campaign.strategy?.post_outline?.map((post: any, i: number) => (
+                          <tr key={i} className="border-b border-border hover:bg-secondary/50 transition-colors">
+                            <td className="py-3 px-4 text-sm font-medium">
+                              {post.date ? new Date(post.date).toLocaleDateString() : (post.day ? `Day ${post.day}` : "TBD")}
+                            </td>
+                            <td className="py-3 px-4 text-sm">{post.platform}</td>
+                            <td className="py-3 px-4 text-sm">{post.format}</td>
+                            <td className="py-3 px-4 text-sm">
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${
+                                post.stage === 'Awareness' ? 'bg-blue-100 text-blue-800' :
+                                post.stage === 'Consideration' ? 'bg-yellow-100 text-yellow-800' :
+                                post.stage === 'Conversion' ? 'bg-green-100 text-green-800' :
+                                'bg-purple-100 text-purple-800'
+                              }`}>
+                                {post.stage}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-sm">{post.goal}</td>
+                            <td className="py-3 px-4 text-sm max-w-xs">
+                              <div className="truncate" title={post.description}>
+                                {post.description || "No description"}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-sm max-w-xs">
+                              <div className="truncate" title={post.purpose}>
+                                {post.purpose || "No purpose"}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-sm max-w-xs">
+                              <div className="truncate" title={post.persona}>
+                                {post.persona || "No persona"}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-sm">
+                              <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium">
+                                {post.cta}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-sm max-w-xs">
+                              <div className="truncate" title={post.kpi}>
+                                {post.kpi || "No KPI"}
+                              </div>
+                            </td>
                           </tr>
-                        ))}
+                        )) || (
+                          <tr>
+                            <td colSpan={10} className="py-6 px-4 text-center text-muted-foreground">
+                              No content schedule available
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -329,41 +358,41 @@ const Campaign = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="scripts">
+          <TabsContent value="scripts" className="space-y-6">
             <Card className="p-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Campaign Scripts</h2>
+                <h2 className="text-2xl font-bold">Content Scripts</h2>
                 <Button
                   variant="outline"
-                  onClick={() => copyToClipboard(campaign.scripts, "All scripts")}
+                  onClick={() => copyToClipboard(campaign.scripts || "", "Scripts")}
                 >
                   <Copy className="w-4 h-4 mr-2" />
                   Copy All
                 </Button>
               </div>
-              <div className="prose prose-sm max-w-none">
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
-                  {campaign.scripts}
+              <div className="bg-muted p-6 rounded-lg">
+                <pre className="text-sm whitespace-pre-wrap text-foreground overflow-auto max-h-96">
+                  {campaign.scripts || "No scripts available"}
                 </pre>
               </div>
             </Card>
           </TabsContent>
 
-          <TabsContent value="visuals">
+          <TabsContent value="visuals" className="space-y-6">
             <Card className="p-8">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Visual Direction</h2>
+                <h2 className="text-2xl font-bold">Visual Guidelines</h2>
                 <Button
                   variant="outline"
-                  onClick={() => copyToClipboard(campaign.visuals, "Visual direction")}
+                  onClick={() => copyToClipboard(campaign.visuals || "", "Visual Guidelines")}
                 >
                   <Copy className="w-4 h-4 mr-2" />
                   Copy All
                 </Button>
               </div>
-              <div className="prose prose-sm max-w-none">
-                <pre className="whitespace-pre-wrap text-sm leading-relaxed font-sans">
-                  {campaign.visuals}
+              <div className="bg-muted p-6 rounded-lg">
+                <pre className="text-sm whitespace-pre-wrap text-foreground overflow-auto max-h-96">
+                  {campaign.visuals || "No visual guidelines available"}
                 </pre>
               </div>
             </Card>
@@ -395,4 +424,4 @@ const Campaign = () => {
   );
 };
 
-export default Campaign;
+export default CampaignWorking;

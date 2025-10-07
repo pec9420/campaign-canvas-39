@@ -9,7 +9,8 @@ export const generateMockCampaign = (goal: string, profile: any) => {
           title: "Stack Creamery Catering Awareness Campaign",
           objective: "Drive 15+ catering inquiries over 14 days",
           target_audience: "Event planners, families planning parties, and corporate event coordinators in Springfield, IL",
-          duration: "14 days",
+          start_date: new Date().toISOString().split('T')[0],
+          end_date: new Date(Date.now() + 13 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           metrics: ["Catering form submissions", "DM inquiries", "Link clicks to catering page"]
         },
         funnel: [
@@ -35,14 +36,102 @@ export const generateMockCampaign = (goal: string, profile: any) => {
           }
         },
         post_outline: [
-          { day: 1, platform: "Instagram Reel", format: "Video", stage: "Awareness", goal: "Show catering setup", cta: "Book your event" },
-          { day: 3, platform: "TikTok", format: "Video", stage: "Awareness", goal: "Behind-the-scenes prep", cta: "Link in bio" },
-          { day: 5, platform: "Facebook", format: "Carousel", stage: "Consideration", goal: "Showcase menu options", cta: "View menu" },
-          { day: 7, platform: "Instagram Story", format: "Story", stage: "Consideration", goal: "Customer testimonial", cta: "Swipe up" },
-          { day: 9, platform: "Instagram Reel", format: "Video", stage: "Conversion", goal: "Limited offer", cta: "Book now" },
-          { day: 11, platform: "TikTok", format: "Video", stage: "Conversion", goal: "Easy booking process", cta: "Link in bio" },
-          { day: 13, platform: "Facebook", format: "Image", stage: "Conversion", goal: "Last chance offer", cta: "Message us" },
-          { day: 14, platform: "Instagram Post", format: "Carousel", stage: "Nurture", goal: "Recap + thank you", cta: "Tag us" }
+          {
+            date: new Date(Date.now() + 0 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            platform: "Instagram Reel",
+            format: "Video",
+            stage: "Awareness",
+            goal: "Show catering setup",
+            description: "Visual showcase of Stack Creamery's professional catering setup with pop-art aesthetic to create immediate visual impact",
+            purpose: "Increase awareness of catering services and establish premium positioning in the market",
+            persona: "Event planners and party hosts looking for memorable catering options",
+            cta: "Book your event",
+            kpi: "2% of viewers save or share post, 1.5% click link in bio"
+          },
+          {
+            date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            platform: "TikTok",
+            format: "Video",
+            stage: "Awareness",
+            goal: "Behind-the-scenes prep",
+            description: "Time-lapse of organized preparation process showing professionalism and attention to detail",
+            purpose: "Build trust through transparency and showcase the effort that goes into each event",
+            persona: "Detail-oriented event coordinators who value organization and reliability",
+            cta: "Link in bio",
+            kpi: "3% of viewers visit link in bio, 5% engagement rate"
+          },
+          {
+            date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            platform: "Facebook",
+            format: "Carousel",
+            stage: "Consideration",
+            goal: "Showcase menu options",
+            description: "Detailed breakdown of three catering packages with pricing and inclusions to aid decision-making",
+            purpose: "Provide clear package options and pricing transparency to reduce friction in booking process",
+            persona: "Budget-conscious event planners comparing catering options and pricing",
+            cta: "View menu",
+            kpi: "4% click through to full menu, 1% submit inquiry form"
+          },
+          {
+            date: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            platform: "Instagram Story",
+            format: "Story",
+            stage: "Consideration",
+            goal: "Customer testimonial",
+            description: "Authentic customer review highlighting satisfaction and positive experience with past catering",
+            purpose: "Build social proof and credibility through real customer experiences",
+            persona: "Risk-averse customers who need reassurance before making catering investment",
+            cta: "Swipe up",
+            kpi: "8% swipe up rate, 2% of story viewers book consultation"
+          },
+          {
+            date: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            platform: "Instagram Reel",
+            format: "Video",
+            stage: "Conversion",
+            goal: "Limited offer",
+            description: "Promotional content featuring time-sensitive discount on topping upgrades to drive immediate action",
+            purpose: "Create urgency and incentivize immediate booking decisions with limited-time value add",
+            persona: "Price-sensitive customers ready to book but need final push with added value",
+            cta: "Book now",
+            kpi: "6% click link in bio, 3% complete booking form"
+          },
+          {
+            date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            platform: "TikTok",
+            format: "Video",
+            stage: "Conversion",
+            goal: "Easy booking process",
+            description: "Screen recording tutorial showing simple 2-minute booking process to reduce booking friction",
+            purpose: "Eliminate perceived complexity barriers and demonstrate how easy it is to book catering",
+            persona: "Busy customers who need convenience and simple processes",
+            cta: "Link in bio",
+            kpi: "7% visit booking page, 4% start booking process"
+          },
+          {
+            date: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            platform: "Facebook",
+            format: "Image",
+            stage: "Conversion",
+            goal: "Last chance offer",
+            description: "Final urgency post reminding audience of limited promotion ending with direct contact encouragement",
+            purpose: "Capture remaining interested prospects before promotion expires",
+            persona: "Procrastinators who need final urgency push to make booking decision",
+            cta: "Message us",
+            kpi: "10% direct message rate, 5% phone calls generated"
+          },
+          {
+            date: new Date(Date.now() + 13 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            platform: "Instagram Post",
+            format: "Carousel",
+            stage: "Nurture",
+            goal: "Recap + thank you",
+            description: "Gratitude post celebrating campaign success and encouraging ongoing community engagement",
+            purpose: "Maintain relationship with audience and encourage user-generated content for future social proof",
+            persona: "New followers and recent customers who need continued engagement",
+            cta: "Tag us",
+            kpi: "15% use branded hashtag, 3% tag business in posts"
+          }
         ]
       },
       scripts: `# Post 1 - Instagram Reel (Day 1)
@@ -506,7 +595,8 @@ Single image: Text overlay on high-quality ice cream photo
         title: `${profile.business_name} Growth Campaign`,
         objective: `Increase ${goal.toLowerCase()} over 14-day period`,
         target_audience: profile.audience.primary.join(", "),
-        duration: "14 days",
+        start_date: new Date().toISOString().split('T')[0],
+        end_date: new Date(Date.now() + 13 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         metrics: ["Engagement rate", "Website clicks", "Inquiries"]
       },
       funnel: [
@@ -531,14 +621,102 @@ Single image: Text overlay on high-quality ice cream photo
         }, {})
       },
       post_outline: [
-        { day: 1, platform: profile.audience.platforms[0], format: "Post", stage: "Awareness", goal: "Introduce business", cta: "Learn more" },
-        { day: 3, platform: profile.audience.platforms[1] || profile.audience.platforms[0], format: "Post", stage: "Awareness", goal: "Show personality", cta: "Follow" },
-        { day: 5, platform: profile.audience.platforms[0], format: "Post", stage: "Consideration", goal: "Highlight service", cta: "See details" },
-        { day: 7, platform: profile.audience.platforms[1] || profile.audience.platforms[0], format: "Post", stage: "Consideration", goal: "Social proof", cta: "Read reviews" },
-        { day: 9, platform: profile.audience.platforms[0], format: "Post", stage: "Conversion", goal: "Special offer", cta: "Book now" },
-        { day: 11, platform: profile.audience.platforms[1] || profile.audience.platforms[0], format: "Post", stage: "Conversion", goal: "Urgency", cta: "Contact us" },
-        { day: 13, platform: profile.audience.platforms[0], format: "Post", stage: "Conversion", goal: "Last reminder", cta: "Get started" },
-        { day: 14, platform: profile.audience.platforms[1] || profile.audience.platforms[0], format: "Post", stage: "Nurture", goal: "Thank you", cta: "Stay connected" }
+        {
+          date: new Date(Date.now() + 0 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          platform: profile.audience.platforms[0],
+          format: "Post",
+          stage: "Awareness",
+          goal: "Introduce business",
+          description: `Professional introduction showcasing ${profile.business_name}'s unique value proposition and brand personality`,
+          purpose: "Establish brand presence and introduce business to new potential customers",
+          persona: profile.audience.primary[0] || "Target customers discovering the business for the first time",
+          cta: "Learn more",
+          kpi: "2% of viewers visit profile, 1% click link in bio"
+        },
+        {
+          date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          platform: profile.audience.platforms[1] || profile.audience.platforms[0],
+          format: "Post",
+          stage: "Awareness",
+          goal: "Show personality",
+          description: "Behind-the-scenes content that humanizes the brand and showcases company culture",
+          purpose: "Build emotional connection and trust through authentic brand storytelling",
+          persona: "Potential customers seeking authentic, relatable businesses",
+          cta: "Follow",
+          kpi: "3% follow rate, 4% engagement rate"
+        },
+        {
+          date: new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          platform: profile.audience.platforms[0],
+          format: "Post",
+          stage: "Consideration",
+          goal: "Highlight service",
+          description: `Detailed showcase of ${profile.business_name}'s key services and unique selling points`,
+          purpose: "Educate audience about service offerings and demonstrate expertise",
+          persona: profile.audience.primary[0] || "Customers comparing service providers",
+          cta: "See details",
+          kpi: "3% click for more details, 2% save post"
+        },
+        {
+          date: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          platform: profile.audience.platforms[1] || profile.audience.platforms[0],
+          format: "Post",
+          stage: "Consideration",
+          goal: "Social proof",
+          description: "Customer testimonials and reviews highlighting successful outcomes and satisfied clients",
+          purpose: "Build credibility and trust through third-party validation",
+          persona: "Cautious customers who need reassurance before making decisions",
+          cta: "Read reviews",
+          kpi: "5% visit reviews page, 2% leave their own review"
+        },
+        {
+          date: new Date(Date.now() + 8 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          platform: profile.audience.platforms[0],
+          format: "Post",
+          stage: "Conversion",
+          goal: "Special offer",
+          description: "Limited-time promotional offer designed to incentivize immediate action",
+          purpose: "Convert interested prospects into customers with compelling value proposition",
+          persona: "Price-conscious customers ready to purchase with the right incentive",
+          cta: "Book now",
+          kpi: "4% click booking link, 2% complete booking"
+        },
+        {
+          date: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          platform: profile.audience.platforms[1] || profile.audience.platforms[0],
+          format: "Post",
+          stage: "Conversion",
+          goal: "Urgency",
+          description: "Time-sensitive messaging emphasizing limited availability or deadline",
+          purpose: "Create urgency to accelerate decision-making process",
+          persona: "Procrastinators who need deadline pressure to take action",
+          cta: "Contact us",
+          kpi: "6% direct contact rate, 3% phone calls"
+        },
+        {
+          date: new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          platform: profile.audience.platforms[0],
+          format: "Post",
+          stage: "Conversion",
+          goal: "Last reminder",
+          description: "Final opportunity messaging for promotion or limited-time offer",
+          purpose: "Capture remaining interested prospects before opportunity expires",
+          persona: "Fence-sitters who need final push to make decision",
+          cta: "Get started",
+          kpi: "5% conversion rate, 7% inquiry rate"
+        },
+        {
+          date: new Date(Date.now() + 13 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+          platform: profile.audience.platforms[1] || profile.audience.platforms[0],
+          format: "Post",
+          stage: "Nurture",
+          goal: "Thank you",
+          description: "Gratitude post acknowledging audience engagement and encouraging ongoing relationship",
+          purpose: "Maintain positive relationship and encourage continued engagement",
+          persona: "New followers and customers who need ongoing nurturing",
+          cta: "Stay connected",
+          kpi: "8% ongoing engagement rate, 4% share content"
+        }
       ]
     },
     scripts: `# Sample Campaign Scripts

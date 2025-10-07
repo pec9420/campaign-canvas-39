@@ -8,12 +8,7 @@ import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Campaign from "./pages/Campaign";
 import BrandHub from "./pages/BrandHub";
-import Campaigns from "./pages/Campaigns";
-import Settings from "./pages/Settings";
 import CampaignTest from "./pages/CampaignTest";
-import CampaignSimple from "./pages/CampaignSimple";
-import CampaignWorking from "./pages/CampaignWorking";
-import CampaignResults from "./pages/CampaignResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,12 +23,8 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/campaign" element={<CampaignWorking />} />
-          <Route path="/campaign-full" element={<Campaign />} />
+          <Route path="/campaign" element={<Campaign />} />
           <Route path="/brand-hub" element={<BrandHub />} />
-          <Route path="/campaigns" element={<Campaigns />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/campaign-results" element={<CampaignResults />} />
           <Route path="/campaign-test" element={<CampaignTest />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -12,21 +12,14 @@ import { toast } from "sonner";
 const Campaign = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Get parameters from URL search params
-  const searchParams = new URLSearchParams(location.search);
-  const profileId = searchParams.get('profileId');
-  const goal = searchParams.get('goal');
+  const { profileId, goal } = location.state || {};
 
   const [loading, setLoading] = useState(true);
   const [loadingStep, setLoadingStep] = useState(1);
   const [campaign, setCampaign] = useState<any>(null);
 
-  console.log("Campaign component mounted. ProfileId:", profileId, "Goal:", goal, "URL params:", location.search);
-
   useEffect(() => {
     if (!profileId || !goal) {
-      console.log("Missing profileId or goal, redirecting to home");
       navigate("/");
       return;
     }
@@ -39,34 +32,23 @@ const Campaign = () => {
 
     // Simulate AI generation
     const generateCampaign = async () => {
-      try {
-        // Agent 1
-        setLoadingStep(1);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      // Agent 1
+      setLoadingStep(1);
+      await new Promise(resolve => setTimeout(resolve, 10000));
 
-        // Agent 2
-        setLoadingStep(2);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      // Agent 2
+      setLoadingStep(2);
+      await new Promise(resolve => setTimeout(resolve, 15000));
 
-        // Agent 3
-        setLoadingStep(3);
-        await new Promise(resolve => setTimeout(resolve, 3000));
+      // Agent 3
+      setLoadingStep(3);
+      await new Promise(resolve => setTimeout(resolve, 15000));
 
-        // Generate mock campaign
-        const mockCampaign = generateMockCampaign(goal, profile);
-        console.log("Generated campaign:", mockCampaign); // Debug log
-
-        if (mockCampaign && mockCampaign.strategy) {
-          setCampaign(mockCampaign);
-          saveCampaign(profileId, { goal, ...mockCampaign });
-        } else {
-          console.error("Invalid campaign data generated");
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Error generating campaign:", error);
-        setLoading(false);
-      }
+      // Generate mock campaign
+      const mockCampaign = generateMockCampaign(goal, profile);
+      setCampaign(mockCampaign);
+      saveCampaign(profileId, { goal, ...mockCampaign });
+      setLoading(false);
     };
 
     generateCampaign();
@@ -187,7 +169,6 @@ const Campaign = () => {
   }
 
   if (!campaign) {
-    console.log("Campaign is null/undefined. Loading:", loading); // Debug log
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <Card className="p-12 max-w-md w-full text-center">
@@ -196,8 +177,6 @@ const Campaign = () => {
       </div>
     );
   }
-
-  console.log("Rendering campaign results with data:", campaign); // Debug log
 
   const profile = getProfile(profileId);
 
