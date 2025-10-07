@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
 import { getProfile } from "@/utils/storage";
 import { generateMockCampaign } from "@/data/mockCampaigns";
+import { BusinessProfile } from "@/data/profiles";
 
 const CampaignSimple = () => {
   const location = useLocation();
@@ -13,44 +14,48 @@ const CampaignSimple = () => {
 
   const [loading, setLoading] = useState(true);
   const [campaign, setCampaign] = useState<any>(null);
+  const [profile, setProfile] = useState<BusinessProfile | null>(null);
 
   console.log("CampaignSimple - ProfileId:", profileId, "Goal:", goal);
 
   useEffect(() => {
-    if (!profileId || !goal) {
-      console.log("Missing profileId or goal");
-      navigate("/");
-      return;
-    }
-
-    const profile = getProfile(profileId);
-    if (!profile) {
-      console.log("Profile not found");
-      navigate("/");
-      return;
-    }
-
-    // Simulate campaign generation
-    const generateCampaign = async () => {
-      try {
-        console.log("Generating campaign...");
-        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
-
-        const mockCampaign = generateMockCampaign(goal, profile);
-        console.log("Generated campaign:", mockCampaign);
-
-        setCampaign(mockCampaign);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error generating campaign:", error);
-        setLoading(false);
+    const loadData = async () => {
+      if (!profileId || !goal) {
+        console.log("Missing profileId or goal");
+        navigate("/");
+        return;
       }
+
+      const loadedProfile = await getProfile(profileId);
+      if (!loadedProfile) {
+        console.log("Profile not found");
+        navigate("/");
+        return;
+      }
+      
+      setProfile(loadedProfile);
+
+      // Simulate campaign generation
+      const generateCampaign = async () => {
+        try {
+          console.log("Generating campaign...");
+          await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+
+          const mockCampaign = generateMockCampaign(goal, loadedProfile);
+          console.log("Generated campaign:", mockCampaign);
+
+          setCampaign(mockCampaign);
+          setLoading(false);
+        } catch (error) {
+          console.error("Error generating campaign:", error);
+          setLoading(false);
+        }
+      };
+
+      generateCampaign();
     };
-
-    generateCampaign();
+    loadData();
   }, [profileId, goal, navigate]);
-
-  const profile = profileId ? getProfile(profileId) : null;
 
   if (loading) {
     return (

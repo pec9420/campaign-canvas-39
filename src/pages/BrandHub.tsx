@@ -36,18 +36,21 @@ const BrandHub = () => {
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    if (!profileId) {
-      navigate("/dashboard");
-      return;
-    }
+    const loadProfile = async () => {
+      if (!profileId) {
+        navigate("/dashboard");
+        return;
+      }
 
-    const loadedProfile = getProfile(profileId);
-    if (!loadedProfile) {
-      navigate("/dashboard");
-      return;
-    }
+      const loadedProfile = await getProfile(profileId);
+      if (!loadedProfile) {
+        navigate("/dashboard");
+        return;
+      }
 
-    setProfile(loadedProfile);
+      setProfile(loadedProfile);
+    };
+    loadProfile();
   }, [profileId, navigate]);
 
   const handleSwitchBusiness = () => {

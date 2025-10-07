@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getProfile, saveCampaign } from "@/utils/storage";
 import { generateMockCampaign } from "@/data/mockCampaigns";
+import { BusinessProfile } from "@/data/profiles";
 import { Sparkles, ArrowLeft, Download, Copy, FileText, MessageSquare, Image } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,60 +22,66 @@ const CampaignWorking = () => {
   const [loading, setLoading] = useState(true);
   const [loadingStep, setLoadingStep] = useState(1);
   const [campaign, setCampaign] = useState<any>(null);
+  const [profile, setProfile] = useState<BusinessProfile | null>(null);
 
   console.log("CampaignWorking - ProfileId:", profileId, "Goal:", goal);
 
   useEffect(() => {
-    if (!profileId || !goal) {
-      console.log("Missing profileId or goal, redirecting to home");
-      navigate("/");
-      return;
-    }
-
-    const profile = getProfile(profileId);
-    if (!profile) {
-      console.log("Profile not found, redirecting to home");
-      navigate("/");
-      return;
-    }
-
-    // Simulate AI generation
-    const generateCampaign = async () => {
-      try {
-        // Agent 1
-        setLoadingStep(1);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Agent 2
-        setLoadingStep(2);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Agent 3
-        setLoadingStep(3);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-
-        // Generate mock campaign
-        const mockCampaign = generateMockCampaign(goal, profile);
-        console.log("Generated campaign:", mockCampaign);
-
-        if (mockCampaign && mockCampaign.strategy) {
-          setCampaign(mockCampaign);
-          saveCampaign(profileId, { goal, ...mockCampaign });
-          // Show success toast
-          toast.success("Your campaign is now ready! 🎉", {
-            duration: 4000,
-          });
-        } else {
-          console.error("Invalid campaign data generated");
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Error generating campaign:", error);
-        setLoading(false);
+    const loadData = async () => {
+      if (!profileId || !goal) {
+        console.log("Missing profileId or goal, redirecting to home");
+        navigate("/");
+        return;
       }
-    };
 
-    generateCampaign();
+      const loadedProfile = await getProfile(profileId);
+      if (!loadedProfile) {
+        console.log("Profile not found, redirecting to home");
+        navigate("/");
+        return;
+      }
+      
+      setProfile(loadedProfile);
+
+      // Simulate AI generation
+      const generateCampaign = async () => {
+        try {
+          // Agent 1
+          setLoadingStep(1);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Agent 2
+          setLoadingStep(2);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Agent 3
+          setLoadingStep(3);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+
+          // Generate mock campaign
+          const mockCampaign = generateMockCampaign(goal, loadedProfile);
+          console.log("Generated campaign:", mockCampaign);
+
+          if (mockCampaign && mockCampaign.strategy) {
+            setCampaign(mockCampaign);
+            saveCampaign(profileId, { goal, ...mockCampaign });
+            // Show success toast
+            toast.success("Your campaign is now ready! 🎉", {
+              duration: 4000,
+            });
+          } else {
+            console.error("Invalid campaign data generated");
+          }
+          setLoading(false);
+        } catch (error) {
+          console.error("Error generating campaign:", error);
+          setLoading(false);
+        }
+      };
+
+      generateCampaign();
+    };
+    loadData();
   }, [profileId, goal, navigate]);
 
   const copyToClipboard = (text: string, label: string) => {
@@ -187,7 +194,9 @@ const CampaignWorking = () => {
 
   console.log("Rendering campaign results with data:", campaign);
 
-  const profile = getProfile(profileId);
+  if (!profile) {
+    return null;
+  }
 
   const handleSwitchBusiness = () => {
     navigate("/");

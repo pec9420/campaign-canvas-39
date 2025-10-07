@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
 import { getProfile, saveCampaign } from "@/utils/storage";
 import { generateMockCampaign } from "@/data/mockCampaigns";
+import { BusinessProfile } from "@/data/profiles";
 import { Loader2, Copy, Download, Sparkles, FileText, MessageSquare, Image, ArrowLeft, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
@@ -21,55 +22,61 @@ const Campaign = () => {
   const [loading, setLoading] = useState(true);
   const [loadingStep, setLoadingStep] = useState(1);
   const [campaign, setCampaign] = useState<any>(null);
+  const [profile, setProfile] = useState<BusinessProfile | null>(null);
 
   console.log("Campaign component mounted. ProfileId:", profileId, "Goal:", goal, "URL params:", location.search);
 
   useEffect(() => {
-    if (!profileId || !goal) {
-      console.log("Missing profileId or goal, redirecting to home");
-      navigate("/");
-      return;
-    }
-
-    const profile = getProfile(profileId);
-    if (!profile) {
-      navigate("/");
-      return;
-    }
-
-    // Simulate AI generation
-    const generateCampaign = async () => {
-      try {
-        // Agent 1
-        setLoadingStep(1);
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        // Agent 2
-        setLoadingStep(2);
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        // Agent 3
-        setLoadingStep(3);
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        // Generate mock campaign
-        const mockCampaign = generateMockCampaign(goal, profile);
-        console.log("Generated campaign:", mockCampaign); // Debug log
-
-        if (mockCampaign && mockCampaign.strategy) {
-          setCampaign(mockCampaign);
-          saveCampaign(profileId, { goal, ...mockCampaign });
-        } else {
-          console.error("Invalid campaign data generated");
-        }
-        setLoading(false);
-      } catch (error) {
-        console.error("Error generating campaign:", error);
-        setLoading(false);
+    const loadData = async () => {
+      if (!profileId || !goal) {
+        console.log("Missing profileId or goal, redirecting to home");
+        navigate("/");
+        return;
       }
-    };
 
-    generateCampaign();
+      const loadedProfile = await getProfile(profileId);
+      if (!loadedProfile) {
+        navigate("/");
+        return;
+      }
+      
+      setProfile(loadedProfile);
+
+      // Simulate AI generation
+      const generateCampaign = async () => {
+        try {
+          // Agent 1
+          setLoadingStep(1);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+
+          // Agent 2
+          setLoadingStep(2);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+
+          // Agent 3
+          setLoadingStep(3);
+          await new Promise(resolve => setTimeout(resolve, 3000));
+
+          // Generate mock campaign
+          const mockCampaign = generateMockCampaign(goal, loadedProfile);
+          console.log("Generated campaign:", mockCampaign); // Debug log
+
+          if (mockCampaign && mockCampaign.strategy) {
+            setCampaign(mockCampaign);
+            saveCampaign(profileId, { goal, ...mockCampaign });
+          } else {
+            console.error("Invalid campaign data generated");
+          }
+          setLoading(false);
+        } catch (error) {
+          console.error("Error generating campaign:", error);
+          setLoading(false);
+        }
+      };
+
+      generateCampaign();
+    };
+    loadData();
   }, [profileId, goal, navigate]);
 
   const copyToClipboard = (text: string, label: string) => {
@@ -199,7 +206,9 @@ const Campaign = () => {
 
   console.log("Rendering campaign results with data:", campaign); // Debug log
 
-  const profile = getProfile(profileId);
+  if (!profile) {
+    return null;
+  }
 
   const handleSwitchBusiness = () => {
     navigate("/");

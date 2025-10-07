@@ -55,12 +55,15 @@ const Onboarding = () => {
   });
 
   useEffect(() => {
-    if (profileId) {
-      const existing = getProfile(profileId);
-      if (existing && !existing.reset_on_load) {
-        navigate("/dashboard", { state: { profileId } });
+    const checkProfile = async () => {
+      if (profileId) {
+        const existing = await getProfile(profileId);
+        if (existing && !(existing as any).reset_on_load) {
+          navigate("/dashboard", { state: { profileId } });
+        }
       }
-    }
+    };
+    checkProfile();
   }, [profileId, navigate]);
 
   const handleNext = () => {
