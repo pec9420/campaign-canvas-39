@@ -24,7 +24,7 @@ export const saveProfile = async (profile: BusinessProfile): Promise<void> => {
         content_rules: cleanProfile.content_rules as any,
         personas: cleanProfile.personas as any,
         audience: cleanProfile.audience as any,
-      });
+      }, { onConflict: 'id' });
 
     if (error) {
       console.error("Supabase error details:", error);

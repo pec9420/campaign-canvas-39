@@ -57,14 +57,18 @@ const BrandHub = () => {
     navigate("/");
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (profile && profileId) {
-      saveProfile(profile);
-      setHasChanges(false);
-      toast.success("Brand profile saved successfully!");
+      try {
+        await saveProfile(profile);
+        setHasChanges(false);
+        toast.success("Brand profile saved successfully!");
+      } catch (err) {
+        console.error("Save error:", err);
+        toast.error("Failed to save profile. Please try again.");
+      }
     }
   };
-
   const updateProfile = (updates: Partial<BusinessProfile>) => {
     if (profile) {
       setProfile({ ...profile, ...updates });
