@@ -52,52 +52,34 @@ export type Database = {
       }
       brand_profiles: {
         Row: {
-          audience: Json | null
-          brand_identity: Json | null
           business_name: string
-          content_rules: Json | null
           created_at: string | null
           id: string
           locations: string[] | null
-          niche: string | null
-          owner_name: string | null
           personas: Json | null
-          programs: Json | null
-          services: string[] | null
           updated_at: string | null
           voice: Json | null
+          what_we_offer: string | null
         }
         Insert: {
-          audience?: Json | null
-          brand_identity?: Json | null
           business_name: string
-          content_rules?: Json | null
           created_at?: string | null
           id: string
           locations?: string[] | null
-          niche?: string | null
-          owner_name?: string | null
           personas?: Json | null
-          programs?: Json | null
-          services?: string[] | null
           updated_at?: string | null
           voice?: Json | null
+          what_we_offer?: string | null
         }
         Update: {
-          audience?: Json | null
-          brand_identity?: Json | null
           business_name?: string
-          content_rules?: Json | null
           created_at?: string | null
           id?: string
           locations?: string[] | null
-          niche?: string | null
-          owner_name?: string | null
           personas?: Json | null
-          programs?: Json | null
-          services?: string[] | null
           updated_at?: string | null
           voice?: Json | null
+          what_we_offer?: string | null
         }
         Relationships: []
       }

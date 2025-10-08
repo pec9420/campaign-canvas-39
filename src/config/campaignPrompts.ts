@@ -63,20 +63,19 @@ export const buildCampaignUserPrompt = (
   return `
 BUSINESS CONTEXT:
 Business Name: ${profile.business_name}
-Locations: ${profile.locations.join(", ")}
-What We Offer: ${profile.what_we_offer}
-Niche: ${profile.niche}
+Locations: ${profile.locations?.join(", ") || "N/A"}
+What We Offer: ${profile.what_we_offer || "Not specified"}
 
 BRAND VOICE:
-Tone: ${profile.voice.tone}
-Signature Phrases: ${profile.voice.signature_phrases.join(", ")}
+Tone: ${profile.voice?.tone || "Professional"}
+Signature Phrases: ${profile.voice?.signature_phrases?.join(", ") || "N/A"}
 (Use these phrases naturally, don't force them)
 
 TARGET PERSONA:
 Name: ${persona.name} ${persona.emoji}
 Who They Are: ${persona.who_are_they}
 Main Problem/Goal: ${persona.main_problem}
-Platforms: ${persona.platforms.join(", ")}
+Platforms: ${persona.platforms?.join(", ") || "N/A"}
 ${persona.real_example ? `Real Customer Example: ${persona.real_example}` : ""}
 
 CAMPAIGN BRIEF:
@@ -86,12 +85,12 @@ Duration: ${brief.duration_days} days
 Start Date: ${new Date().toISOString().split('T')[0]}
 
 REQUIREMENTS:
-1. Generate campaign strategy with KPIs for each platform: ${persona.platforms.join(", ")}
-2. Create ${postCount} posts per platform (${persona.platforms.length * postCount} total posts)
+1. Generate campaign strategy with KPIs for each platform: ${persona.platforms?.join(", ") || "N/A"}
+2. Create ${postCount} posts per platform (${(persona.platforms?.length || 1) * postCount} total posts)
 3. Each post should:
    - Speak directly to ${persona.name}'s problem: "${persona.main_problem}"
-   - Reference the location (${profile.locations[0]})
-   - Use ${profile.voice.tone} tone
+   - Reference the location (${profile.locations?.[0] || "your area"})
+   - Use ${profile.voice?.tone || "professional"} tone
    - Include clear visual directions for content creation
    - Have platform-specific formatting and best practices
 4. Mix formats appropriately for each platform
