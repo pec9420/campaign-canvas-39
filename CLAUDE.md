@@ -413,6 +413,33 @@ Already configured in Lovable Cloud:
 
 ---
 
+## Recent Bug Fixes
+
+### Schema Safety Checks (Oct 7, 2025)
+
+**Issue**: Brand Hub page showed blank when profiles loaded from Supabase database with undefined array fields.
+
+**Root Cause**:
+- Database profiles had `voice`, `locations`, `personas`, and `signature_phrases` fields as undefined
+- Component tried to call `.map()`, `.length`, `.slice()` on undefined arrays
+- Runtime errors: "Cannot read properties of undefined (reading 'map')"
+
+**Fix Applied** (BrandHubSimplified.tsx):
+- Added safety checks with optional chaining and nullish coalescing
+- Changed `profile.locations.map()` → `(profile.locations || []).map()`
+- Changed `profile.voice.tone` → `profile.voice?.tone`
+- Changed `persona.platforms.slice()` → `(persona.platforms || []).slice()`
+- Applied to all array operations: map, filter, length, slice
+
+**Files Modified**:
+- `src/pages/BrandHubSimplified.tsx` - Added 15+ safety checks throughout component
+- All array fields now safely default to empty arrays
+- All nested objects use optional chaining (`?.`)
+
+**Result**: Brand Hub now loads correctly even when Supabase profiles have missing/undefined fields.
+
+---
+
 ## Known Issues & TODOs
 
 ### Current Limitations

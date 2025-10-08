@@ -69,25 +69,35 @@ export const getCurrentProfileId = (): string | null => {
 };
 
 export const getCurrentProfile = async (): Promise<BusinessProfile | null> => {
+  console.log("getCurrentProfile: Starting...");
   const currentId = getCurrentProfileId();
+  console.log("getCurrentProfile: currentId from localStorage:", currentId);
+
   if (currentId) {
     const profile = await getProfile(currentId);
+    console.log("getCurrentProfile: profile from DB:", profile);
     if (profile) return profile;
   }
 
   // Fallback: get first available profile or use stack_creamery
+  console.log("getCurrentProfile: No current profile, fetching all profiles...");
   const profiles = await getAllProfiles();
   const profileIds = Object.keys(profiles);
+  console.log("getCurrentProfile: All profile IDs:", profileIds);
 
   if (profileIds.length > 0) {
     const firstId = profileIds[0];
+    console.log("getCurrentProfile: Using first profile:", firstId);
     localStorage.setItem(CURRENT_PROFILE_KEY, firstId);
     return profiles[firstId];
   }
 
   // Last resort: load stack_creamery from preloaded profiles
+  console.log("getCurrentProfile: No profiles in DB, creating default profile...");
   const defaultProfile = PRELOADED_PROFILES.stack_creamery;
+  console.log("getCurrentProfile: Default profile:", defaultProfile);
   await saveProfile(defaultProfile);
+  console.log("getCurrentProfile: Default profile saved, returning it");
   return defaultProfile;
 };
 

@@ -83,11 +83,15 @@ const BrandHubSimplified = () => {
 
   useEffect(() => {
     const loadProfile = async () => {
+      console.log("BrandHub: Starting to load profile...");
       const loadedProfile = await getCurrentProfile();
+      console.log("BrandHub: Loaded profile:", loadedProfile);
       if (!loadedProfile) {
+        console.log("BrandHub: No profile found, redirecting to /");
         navigate("/");
         return;
       }
+      console.log("BrandHub: Setting profile state");
       setProfile(loadedProfile);
     };
     loadProfile();
@@ -128,24 +132,24 @@ const BrandHubSimplified = () => {
   // Location handlers
   const addLocation = () => {
     if (profile && newLocation.trim()) {
-      updateProfile({ locations: [...profile.locations, newLocation.trim()] });
+      updateProfile({ locations: [...(profile.locations || []), newLocation.trim()] });
       setNewLocation("");
     }
   };
 
   const removeLocation = (index: number) => {
     if (profile) {
-      updateProfile({ locations: profile.locations.filter((_, i) => i !== index) });
+      updateProfile({ locations: (profile.locations || []).filter((_, i) => i !== index) });
     }
   };
 
   // Signature phrase handlers
   const addPhrase = () => {
-    if (profile && newPhrase.trim() && profile.voice.signature_phrases.length < 5) {
+    if (profile && newPhrase.trim() && ((profile.voice?.signature_phrases || []).length < 5)) {
       updateProfile({
         voice: {
-          ...profile.voice,
-          signature_phrases: [...profile.voice.signature_phrases, newPhrase.trim()]
+          ...(profile.voice || { tone: '', signature_phrases: [] }),
+          signature_phrases: [...(profile.voice?.signature_phrases || []), newPhrase.trim()]
         }
       });
       setNewPhrase("");
@@ -156,8 +160,8 @@ const BrandHubSimplified = () => {
     if (profile) {
       updateProfile({
         voice: {
-          ...profile.voice,
-          signature_phrases: profile.voice.signature_phrases.filter(p => p !== phrase)
+          ...(profile.voice || { tone: '', signature_phrases: [] }),
+          signature_phrases: (profile.voice?.signature_phrases || []).filter(p => p !== phrase)
         }
       });
     }
@@ -167,14 +171,15 @@ const BrandHubSimplified = () => {
   const handleSavePersona = (persona: Persona) => {
     if (!profile) return;
 
-    const existingIndex = profile.personas.findIndex(p => p.id === persona.id);
+    const personas = profile.personas || [];
+    const existingIndex = personas.findIndex(p => p.id === persona.id);
     let updatedPersonas;
 
     if (existingIndex >= 0) {
-      updatedPersonas = [...profile.personas];
+      updatedPersonas = [...personas];
       updatedPersonas[existingIndex] = persona;
     } else {
-      updatedPersonas = [...profile.personas, persona];
+      updatedPersonas = [...personas, persona];
     }
 
     updateProfile({ personas: updatedPersonas });
@@ -184,7 +189,7 @@ const BrandHubSimplified = () => {
 
   const handleDeletePersona = (id: string) => {
     if (profile) {
-      updateProfile({ personas: profile.personas.filter(p => p.id !== id) });
+      updateProfile({ personas: (profile.personas || []).filter(p => p.id !== id) });
     }
   };
 
@@ -251,7 +256,7 @@ const BrandHubSimplified = () => {
                 Where do you serve customers? Be specific - "Springfield, IL" not just "Illinois"
               </p>
               <div className="flex flex-wrap gap-2 mb-3">
-                {profile.locations.map((location, index) => (
+                {(profile.locations || []).map((location, index) => (
                   <Badge key={index} variant="secondary" className="px-3 py-1.5 text-sm">
                     {location}
                     <button
@@ -309,11 +314,11 @@ const BrandHubSimplified = () => {
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {TONE_OPTIONS.map((tone) => {
-                  const isSelected = profile.voice.tone === tone.id;
+                  const isSelected = profile.voice?.tone === tone.id;
                   return (
                     <Card
                       key={tone.id}
-                      onClick={() => updateProfile({ voice: { ...profile.voice, tone: tone.id } })}
+                      onClick={() => updateProfile({ voice: { ...(profile.voice || { tone: '', signature_phrases: [] }), tone: tone.id } })}
                       className={`p-4 cursor-pointer transition-all ${
                         isSelected
                           ? 'border-primary border-2 bg-primary/5'
@@ -340,7 +345,7 @@ const BrandHubSimplified = () => {
                 Brand-specific words or catchphrases you always use
               </p>
               <div className="flex flex-wrap gap-2 mb-3">
-                {profile.voice.signature_phrases.map((phrase) => (
+                {(profile.voice?.signature_phrases || []).map((phrase) => (
                   <Badge key={phrase} className="bg-primary/10 text-primary hover:bg-primary/20 px-3 py-1.5">
                     {phrase}
                     <button
@@ -352,7 +357,7 @@ const BrandHubSimplified = () => {
                   </Badge>
                 ))}
               </div>
-              {profile.voice.signature_phrases.length < 5 && (
+              {(profile.voice?.signature_phrases || []).length < 5 && (
                 <div className="flex space-x-2">
                   <Input
                     value={newPhrase}
@@ -365,7 +370,7 @@ const BrandHubSimplified = () => {
                   </Button>
                 </div>
               )}
-              {profile.voice.signature_phrases.length === 0 && (
+              {(profile.voice?.signature_phrases || []).length === 0 && (
                 <p className="text-xs text-muted-foreground mt-2">
                   Examples: "stack it up" for ice cream shop, "fast response" for plumber
                 </p>
@@ -390,7 +395,7 @@ const BrandHubSimplified = () => {
 
           {/* Persona Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {profile.personas.map((persona) => (
+            {(profile.personas || []).map((persona) => (
               <Card
                 key={persona.id}
                 onClick={() => {
@@ -406,7 +411,7 @@ const BrandHubSimplified = () => {
                     {persona.who_are_they}
                   </p>
                   <div className="flex flex-wrap justify-center gap-1">
-                    {persona.platforms.slice(0, 3).map((platform) => (
+                    {(persona.platforms || []).slice(0, 3).map((platform) => (
                       <Badge key={platform} variant="secondary" className="text-xs">
                         {platform}
                       </Badge>
@@ -429,7 +434,7 @@ const BrandHubSimplified = () => {
                   <Plus className="w-6 h-6 text-primary" />
                 </div>
                 <p className="font-medium">
-                  {profile.personas.length === 0 ? 'Add Your First Persona' : 'Add Another Persona'}
+                  {(profile.personas || []).length === 0 ? 'Add Your First Persona' : 'Add Another Persona'}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">2-3 minutes to create</p>
               </div>
@@ -437,7 +442,7 @@ const BrandHubSimplified = () => {
           </div>
 
           {/* Persona Examples */}
-          {profile.personas.length === 0 && (
+          {(profile.personas || []).length === 0 && (
             <div className="mt-6 p-4 bg-muted/30 rounded-lg">
               <p className="text-sm font-medium mb-3">Examples for inspiration:</p>
               <div className="space-y-2 text-sm text-muted-foreground">
