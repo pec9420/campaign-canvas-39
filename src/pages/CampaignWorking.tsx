@@ -3,91 +3,124 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { getProfile, saveCampaign } from "@/utils/storage";
-import { generateMockCampaign } from "@/data/mockCampaigns";
-import { BusinessProfile } from "@/data/profiles";
-import { Sparkles, ArrowLeft, Download, Copy, FileText, MessageSquare, Image } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { getCurrentProfile } from "@/utils/storage";
+import { BusinessProfile, Persona } from "@/data/profiles";
+import { supabase } from "@/integrations/supabase/client";
+import { Sparkles, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 const CampaignWorking = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Get parameters from URL search params
-  const searchParams = new URLSearchParams(location.search);
-  const profileId = searchParams.get('profileId');
-  const goal = searchParams.get('goal');
-
-  const [loading, setLoading] = useState(true);
-  const [loadingStep, setLoadingStep] = useState(1);
-  const [campaign, setCampaign] = useState<any>(null);
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
-
-  console.log("CampaignWorking - ProfileId:", profileId, "Goal:", goal);
+  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
+  const [campaignGoal, setCampaignGoal] = useState("");
+  const [targetOutcome, setTargetOutcome] = useState("");
+  const [duration, setDuration] = useState("14");
+  const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState(1);
 
   useEffect(() => {
     const loadData = async () => {
-      if (!profileId || !goal) {
-        console.log("Missing profileId or goal, redirecting to home");
-        navigate("/");
-        return;
-      }
-
-      const loadedProfile = await getProfile(profileId);
+      const loadedProfile = await getCurrentProfile();
       if (!loadedProfile) {
-        console.log("Profile not found, redirecting to home");
         navigate("/");
         return;
       }
-      
       setProfile(loadedProfile);
-
-      // Simulate AI generation
-      const generateCampaign = async () => {
-        try {
-          // Agent 1
-          setLoadingStep(1);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // Agent 2
-          setLoadingStep(2);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // Agent 3
-          setLoadingStep(3);
-          await new Promise(resolve => setTimeout(resolve, 2000));
-
-          // Generate mock campaign
-          const mockCampaign = generateMockCampaign(goal, loadedProfile);
-          console.log("Generated campaign:", mockCampaign);
-
-          if (mockCampaign && mockCampaign.strategy) {
-            setCampaign(mockCampaign);
-            saveCampaign(profileId, { goal, ...mockCampaign });
-            // Show success toast
-            toast.success("Your campaign is now ready! 🎉", {
-              duration: 4000,
-            });
-          } else {
-            console.error("Invalid campaign data generated");
-          }
-          setLoading(false);
-        } catch (error) {
-          console.error("Error generating campaign:", error);
-          setLoading(false);
-        }
-      };
-
-      generateCampaign();
     };
     loadData();
-  }, [profileId, goal, navigate]);
+  }, [navigate]);
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${label} copied to clipboard!`);
+  const handlePersonaSelect = (persona: Persona) => {
+    setSelectedPersona(persona);
   };
+
+  const handleGenerateCampaign = async () => {
+    if (!profile || !selectedPersona || !campaignGoal || !targetOutcome) {
+      toast.error("Please fill in all fields and select a persona");
+      return;
+    }
+
+    setLoading(true);
+    setLoadingStep(1);
+
+    try {
+      // Simulate agent progress
+      setTimeout(() => setLoadingStep(2), 2000);
+      setTimeout(() => setLoadingStep(3), 4000);
+
+      const { data, error } = await supabase.functions.invoke('generate-campaign', {
+        body: {
+          profile,
+          persona: selectedPersona,
+          brief: {
+            campaign_goal: campaignGoal,
+            target_outcome: targetOutcome,
+            duration_days: parseInt(duration)
+          }
+        }
+      });
+
+      if (error) {
+        console.error("Error generating campaign:", error);
+        toast.error(error.message || "Failed to generate campaign");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Campaign generated:", data);
+
+      // Save to database
+      const { data: savedCampaign, error: saveError } = await supabase
+        .from('campaigns')
+        .insert({
+          profile_id: profile.id,
+          persona_id: selectedPersona.id,
+          campaign_goal: campaignGoal,
+          target_outcome: targetOutcome,
+          duration_days: parseInt(duration),
+          strategy: data.strategy,
+          status: 'draft'
+        })
+        .select()
+        .single();
+
+      if (saveError) {
+        console.error("Error saving campaign:", saveError);
+        toast.error("Failed to save campaign");
+        setLoading(false);
+        return;
+      }
+
+      toast.success("Campaign generated successfully! 🎉");
+      
+      // Navigate to results page
+      navigate(`/campaign-results?campaignId=${savedCampaign.id}`);
+
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("An error occurred while generating the campaign");
+      setLoading(false);
+    }
+  };
+
+  const handleSwitchBusiness = () => {
+    navigate("/");
+  };
+
+  if (!profile) return null;
 
   if (loading) {
     const agents = [
@@ -95,23 +128,23 @@ const CampaignWorking = () => {
         id: 1,
         name: "Strategist",
         icon: "🧠",
-        task: "Analyzing your business...",
+        task: "Analyzing your brand and persona...",
         completed: loadingStep > 1,
         active: loadingStep === 1
       },
       {
         id: 2,
-        name: "Scripter",
+        name: "Content Creator",
         icon: "✍️",
-        task: "Writing your content...",
+        task: "Crafting platform-specific posts...",
         completed: loadingStep > 2,
         active: loadingStep === 2
       },
       {
         id: 3,
-        name: "Visual Planner",
-        icon: "📸",
-        task: "Planning visuals...",
+        name: "Performance Analyst",
+        icon: "📊",
+        task: "Setting KPIs and success metrics...",
         completed: loadingStep > 3,
         active: loadingStep === 3
       }
@@ -122,7 +155,6 @@ const CampaignWorking = () => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
         <Card className="relative z-10 p-12 max-w-lg w-full bg-card/95 backdrop-blur border shadow-2xl">
           <div className="text-center">
-            {/* Main Loader */}
             <div className="relative mb-8">
               <div className="w-24 h-24 bg-gradient-to-br from-primary to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
                 <Sparkles className="w-12 h-12 text-white animate-spin" />
@@ -135,24 +167,22 @@ const CampaignWorking = () => {
               </div>
             </div>
 
-            {/* Fun Messages */}
             <div className="mb-8">
               <h2 className="text-2xl font-bold text-foreground mb-2">
                 Creating Your Campaign
               </h2>
               <p className="text-lg text-muted-foreground">
-                Channeling social media magic...
+                Our AI agents are working their magic...
               </p>
             </div>
 
-            {/* Agent Status */}
             <div className="space-y-4">
               {agents.map((agent) => (
                 <div
                   key={agent.id}
                   className={`flex items-center space-x-4 p-4 rounded-lg transition-all duration-300 ${
                     agent.completed
-                      ? "bg-green-50 border border-green-200"
+                      ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
                       : agent.active
                       ? "bg-primary/10 border border-primary/30"
                       : "bg-muted/50"
@@ -168,7 +198,7 @@ const CampaignWorking = () => {
                     </p>
                     {agent.active && (
                       <p className="text-sm text-primary">
-                        Currently: {agent.task}
+                        {agent.task}
                       </p>
                     )}
                   </div>
@@ -181,251 +211,165 @@ const CampaignWorking = () => {
     );
   }
 
-  if (!campaign) {
-    console.log("Campaign is null/undefined. Loading:", loading);
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <Card className="p-12 max-w-md w-full text-center">
-          <p className="text-lg text-muted-foreground">Loading campaign...</p>
-        </Card>
-      </div>
-    );
-  }
-
-  console.log("Rendering campaign results with data:", campaign);
-
-  if (!profile) {
-    return null;
-  }
-
-  const handleSwitchBusiness = () => {
-    navigate("/");
-  };
-
   return (
     <DashboardLayout
-      title="Campaign Results"
+      title="Create Campaign"
       profile={profile}
       onSwitchBusiness={handleSwitchBusiness}
     >
-      <div className="space-y-6">
-        {/* Header Section */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center space-x-2 mb-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/dashboard", { state: { profileId } })}
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-            </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              {campaign.strategy?.overview?.title || "Campaign Results"}
-            </h1>
-            <p className="text-lg text-muted-foreground">
-              <span className="font-medium">Goal:</span> {goal}
-            </p>
-          </div>
-          <div className="flex space-x-3">
-            <Button variant="outline" size="lg">
-              <Download className="w-4 h-4 mr-2" />
-              Export PDF
-            </Button>
-            <Button size="lg" onClick={() => navigate("/dashboard", { state: { profileId } })}>
-              <Sparkles className="w-4 h-4 mr-2" />
-              Create Another
-            </Button>
-          </div>
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header */}
+        <div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/dashboard")}
+            className="mb-4"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Dashboard
+          </Button>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Create New Campaign
+          </h1>
+          <p className="text-lg text-muted-foreground">
+            Fill in the details below to generate a complete social media campaign
+          </p>
         </div>
 
-        {/* Tabs */}
-        <Tabs defaultValue="strategy" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 h-12">
-            <TabsTrigger value="strategy" className="flex items-center space-x-2">
-              <FileText className="w-4 h-4" />
-              <span>Strategy</span>
-            </TabsTrigger>
-            <TabsTrigger value="scripts" className="flex items-center space-x-2">
-              <MessageSquare className="w-4 h-4" />
-              <span>Content</span>
-            </TabsTrigger>
-            <TabsTrigger value="visuals" className="flex items-center space-x-2">
-              <Image className="w-4 h-4" />
-              <span>Visuals</span>
-            </TabsTrigger>
-          </TabsList>
+        {/* Campaign Brief Form */}
+        <Card className="p-8">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Campaign Brief</h2>
+              <p className="text-muted-foreground mb-6">
+                Tell us what you want to achieve with this campaign
+              </p>
+            </div>
 
-          <TabsContent value="strategy" className="space-y-6">
-            <Card className="p-8">
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-2xl font-bold mb-4">Campaign Overview</h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="p-4 bg-secondary rounded-lg">
-                      <div className="text-sm text-muted-foreground mb-1">Title</div>
-                      <div className="font-semibold">{campaign.strategy?.overview?.title || "No title"}</div>
-                    </div>
-                    <div className="p-4 bg-secondary rounded-lg">
-                      <div className="text-sm text-muted-foreground mb-1">Objective</div>
-                      <div className="font-semibold">{campaign.strategy?.overview?.objective || "No objective"}</div>
-                    </div>
-                    <div className="p-4 bg-secondary rounded-lg">
-                      <div className="text-sm text-muted-foreground mb-1">Campaign Dates</div>
-                      <div className="font-semibold">
-                        {campaign.strategy?.overview?.start_date && campaign.strategy?.overview?.end_date ?
-                          `${new Date(campaign.strategy.overview.start_date).toLocaleDateString()} - ${new Date(campaign.strategy.overview.end_date).toLocaleDateString()}` :
-                          "No dates set"
-                        }
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="campaign-goal">Campaign Goal</Label>
+                <Textarea
+                  id="campaign-goal"
+                  placeholder="e.g., Increase weekend bookings by 20%"
+                  value={campaignGoal}
+                  onChange={(e) => setCampaignGoal(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="target-outcome">Target Outcome</Label>
+                <Textarea
+                  id="target-outcome"
+                  placeholder="e.g., Get 50+ catering inquiries"
+                  value={targetOutcome}
+                  onChange={(e) => setTargetOutcome(e.target.value)}
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="duration">Campaign Duration</Label>
+                <Select value={duration} onValueChange={setDuration}>
+                  <SelectTrigger id="duration">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7">7 days</SelectItem>
+                    <SelectItem value="14">14 days</SelectItem>
+                    <SelectItem value="21">21 days</SelectItem>
+                    <SelectItem value="30">30 days</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* Persona Selection */}
+        <Card className="p-8">
+          <div className="space-y-6">
+            <div>
+              <h2 className="text-2xl font-semibold mb-2">Select Target Persona</h2>
+              <p className="text-muted-foreground">
+                Choose the audience you want to reach with this campaign
+              </p>
+            </div>
+
+            {profile.personas && profile.personas.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {profile.personas.map((persona) => (
+                  <Card
+                    key={persona.id}
+                    className={`p-6 cursor-pointer transition-all hover:shadow-lg ${
+                      selectedPersona?.id === persona.id
+                        ? "border-2 border-primary bg-primary/5"
+                        : "border border-border"
+                    }`}
+                    onClick={() => handlePersonaSelect(persona)}
+                  >
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-4xl">{persona.emoji}</span>
+                          <div>
+                            <h3 className="font-semibold text-lg">{persona.name}</h3>
+                          </div>
+                        </div>
+                        {selectedPersona?.id === persona.id && (
+                          <CheckCircle2 className="w-6 h-6 text-primary" />
+                        )}
+                      </div>
+
+                      <p className="text-sm text-muted-foreground">
+                        {persona.who_are_they}
+                      </p>
+
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-2">Main Problem:</p>
+                        <p className="text-sm font-medium">{persona.main_problem}</p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        {persona.platforms.map((platform) => (
+                          <Badge key={platform} variant="secondary" className="text-xs">
+                            {platform}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
-                    <div className="p-4 bg-secondary rounded-lg">
-                      <div className="text-sm text-muted-foreground mb-1">Target Audience</div>
-                      <div className="font-semibold">{campaign.strategy?.overview?.target_audience || "No audience"}</div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Content Schedule */}
-                <div>
-                  <h3 className="text-xl font-bold mb-4">Content Schedule</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full border-collapse">
-                      <thead>
-                        <tr className="border-b border-border">
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Date</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Platform</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Format</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Stage</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Goal</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Description</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Purpose</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">Persona</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">CTA</th>
-                          <th className="text-left py-3 px-4 font-semibold text-sm">KPI</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {campaign.strategy?.post_outline?.map((post: any, i: number) => (
-                          <tr key={i} className="border-b border-border hover:bg-secondary/50 transition-colors">
-                            <td className="py-3 px-4 text-sm font-medium">
-                              {post.date ? new Date(post.date).toLocaleDateString() : (post.day ? `Day ${post.day}` : "TBD")}
-                            </td>
-                            <td className="py-3 px-4 text-sm">{post.platform}</td>
-                            <td className="py-3 px-4 text-sm">{post.format}</td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${
-                                post.stage === 'Awareness' ? 'bg-blue-100 text-blue-800' :
-                                post.stage === 'Consideration' ? 'bg-yellow-100 text-yellow-800' :
-                                post.stage === 'Conversion' ? 'bg-green-100 text-green-800' :
-                                'bg-purple-100 text-purple-800'
-                              }`}>
-                                {post.stage}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm">{post.goal}</td>
-                            <td className="py-3 px-4 text-sm max-w-xs">
-                              <div className="truncate" title={post.description}>
-                                {post.description || "No description"}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-sm max-w-xs">
-                              <div className="truncate" title={post.purpose}>
-                                {post.purpose || "No purpose"}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-sm max-w-xs">
-                              <div className="truncate" title={post.persona}>
-                                {post.persona || "No persona"}
-                              </div>
-                            </td>
-                            <td className="py-3 px-4 text-sm">
-                              <span className="px-2 py-1 bg-primary/10 text-primary rounded text-xs font-medium">
-                                {post.cta}
-                              </span>
-                            </td>
-                            <td className="py-3 px-4 text-sm max-w-xs">
-                              <div className="truncate" title={post.kpi}>
-                                {post.kpi || "No KPI"}
-                              </div>
-                            </td>
-                          </tr>
-                        )) || (
-                          <tr>
-                            <td colSpan={10} className="py-6 px-4 text-center text-muted-foreground">
-                              No content schedule available
-                            </td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
+                  </Card>
+                ))}
               </div>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="scripts" className="space-y-6">
-            <Card className="p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Content Scripts</h2>
+            ) : (
+              <div className="text-center py-12 bg-secondary rounded-lg">
+                <p className="text-muted-foreground">
+                  No personas found. Please add personas in your Brand Hub first.
+                </p>
                 <Button
                   variant="outline"
-                  onClick={() => copyToClipboard(campaign.scripts || "", "Scripts")}
+                  className="mt-4"
+                  onClick={() => navigate("/brand-hub")}
                 >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy All
+                  Go to Brand Hub
                 </Button>
               </div>
-              <div className="bg-muted p-6 rounded-lg">
-                <pre className="text-sm whitespace-pre-wrap text-foreground overflow-auto max-h-96">
-                  {campaign.scripts || "No scripts available"}
-                </pre>
-              </div>
-            </Card>
-          </TabsContent>
+            )}
+          </div>
+        </Card>
 
-          <TabsContent value="visuals" className="space-y-6">
-            <Card className="p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold">Visual Guidelines</h2>
-                <Button
-                  variant="outline"
-                  onClick={() => copyToClipboard(campaign.visuals || "", "Visual Guidelines")}
-                >
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy All
-                </Button>
-              </div>
-              <div className="bg-muted p-6 rounded-lg">
-                <pre className="text-sm whitespace-pre-wrap text-foreground overflow-auto max-h-96">
-                  {campaign.visuals || "No visual guidelines available"}
-                </pre>
-              </div>
-            </Card>
-          </TabsContent>
-        </Tabs>
-
-        {/* Bottom Actions */}
-        <div className="flex gap-4 mt-8 pt-6 border-t border-border">
+        {/* Generate Button */}
+        <div className="flex justify-end">
           <Button
-            variant="outline"
-            onClick={() => navigate("/dashboard", { state: { profileId } })}
             size="lg"
-            className="flex-1"
+            onClick={handleGenerateCampaign}
+            disabled={!selectedPersona || !campaignGoal || !targetOutcome || loading}
+            className="w-full md:w-auto"
           >
-            <Sparkles className="w-4 h-4 mr-2" />
-            Create Another Campaign
-          </Button>
-          <Button
-            onClick={() => toast.info("PDF export coming soon!")}
-            size="lg"
-            className="flex-1"
-          >
-            <Download className="w-4 h-4 mr-2" />
-            Export as PDF
+            <Sparkles className="w-5 h-5 mr-2" />
+            Generate Campaign
           </Button>
         </div>
       </div>

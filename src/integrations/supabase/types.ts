@@ -101,6 +101,53 @@ export type Database = {
         }
         Relationships: []
       }
+      campaigns: {
+        Row: {
+          campaign_goal: string
+          created_at: string | null
+          duration_days: number
+          id: string
+          persona_id: string
+          profile_id: string
+          status: string
+          strategy: Json
+          target_outcome: string
+          updated_at: string | null
+        }
+        Insert: {
+          campaign_goal: string
+          created_at?: string | null
+          duration_days?: number
+          id?: string
+          persona_id: string
+          profile_id: string
+          status?: string
+          strategy?: Json
+          target_outcome: string
+          updated_at?: string | null
+        }
+        Update: {
+          campaign_goal?: string
+          created_at?: string | null
+          duration_days?: number
+          id?: string
+          persona_id?: string
+          profile_id?: string
+          status?: string
+          strategy?: Json
+          target_outcome?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "brand_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
