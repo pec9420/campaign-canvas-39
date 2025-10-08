@@ -7,7 +7,7 @@ import Landing from "./pages/Landing";
 import Onboarding from "./pages/Onboarding";
 import Dashboard from "./pages/Dashboard";
 import Campaign from "./pages/Campaign";
-import BrandHub from "./pages/BrandHubNew";
+import BrandHub from "./pages/BrandHubSimplified";
 import Settings from "./pages/Settings";
 import CampaignWorking from "./pages/CampaignWorking";
 import CampaignResults from "./pages/CampaignResults";

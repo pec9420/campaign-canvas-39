@@ -1,75 +1,34 @@
-export interface Program {
-  id: string;
-  name: string;
-  type: 'referral' | 'loyalty' | 'membership' | 'other';
-  description: string;
-  details: string;
-}
-
+// Simplified Persona - only essential fields for campaign creation
 export interface Persona {
   id: string;
-  name: string;
-  emoji: string;
-  description: string;
-  demographics: {
-    age_range: string;
-    income_level: 'budget' | 'middle' | 'high';
-    location_types: string[];
-    family_status: string[];
-  };
-  psychographics: {
-    pain_points: string[];
-    goals: string[];
-    values: string[];
-  };
-  social_behavior: {
-    platforms: string[];
-    content_types: string[];
-    best_times: string[];
-  };
-  real_example: string;
+  name: string;              // "Date Night Dani"
+  emoji: string;             // 💑
+  who_are_they: string;      // "Young couples (25-35) seeking Instagram-worthy date experiences"
+  main_problem: string;      // "Want unique date night spots worth posting about"
+  platforms: string[];       // ["instagram", "tiktok"] (max 3)
+  real_example?: string;     // Optional customer story
 }
 
+// Streamlined Business Profile - MVP essentials only
 export interface BusinessProfile {
   id: string;
   business_name: string;
   niche: string;
-  owner_name: string;
 
   // Business Basics
-  locations: string[];
-  services: string[];
-  programs: Program[];
+  locations: string[];          // ["Springfield, IL", "Chicago, IL"]
+  what_we_offer: string;        // Multi-sentence description of services/products
 
-  brand_identity: {
-    colors: string[];
-    personality: string[];
-    visual_style: string;
-  };
-
-  // Voice & Tone - Enhanced
+  // Voice & Tone - Simplified
   voice: {
-    tones: string[]; // Multiple tone selections
-    loved_words: string[];
-    banned_words: string[];
+    tone: string;               // Single-select: "fun_playful", "professional_polished", etc.
+    signature_phrases: string[]; // ["stack", "drip", "loaded"] (max 5)
   };
 
-  content_rules: {
-    show_owner: boolean;
-    show_staff: boolean;
-    show_customers: boolean;
-    topics_to_avoid: string[];
-  };
-
-  // Target Personas
+  // Target Personas - Multiple allowed, each simplified
   personas: Persona[];
 
-  audience: {
-    primary: string[];
-    platforms: string[];
-  };
-
-  // File uploads metadata
+  // File uploads metadata (optional)
   uploaded_files?: {
     business_info?: { name: string; url: string; uploaded_at: string };
     brand_voice?: { name: string; url: string; uploaded_at: string };
@@ -84,123 +43,93 @@ export const PRELOADED_PROFILES: Record<string, BusinessProfile> = {
     id: "stack_creamery",
     business_name: "Stack Creamery",
     niche: "ice_cream_shop",
-    owner_name: "Sarah",
     locations: ["Springfield, IL"],
-    services: ["In-store sales", "Catering", "Events", "Custom flavors"],
-    programs: [
-      {
-        id: "referral-1",
-        name: "Scoop Squad Referral",
-        type: "referral",
-        description: "Get $10 off when you refer a friend",
-        details: "Both you and your friend get $10 off your next order of $30 or more"
-      }
-    ],
-    brand_identity: {
-      colors: ["#14B8A6", "#FBBF24", "#EC4899"],
-      personality: ["playful", "bold", "nostalgic", "fun"],
-      visual_style: "pop_art"
-    },
+    what_we_offer: "Over-the-top ice cream creations with premium toppings and Instagram-worthy presentations. We do in-store sales, event catering, custom flavors, and party bookings. Known for our signature 'Stacks' - towering sundaes that make every visit a celebration.",
     voice: {
-      tones: ["fun_playful", "warm_friendly"],
-      loved_words: ["stack", "drip", "scoop", "loaded"],
-      banned_words: ["artisanal", "craft", "gourmet", "elevated"]
-    },
-    content_rules: {
-      show_owner: false,
-      show_staff: true,
-      show_customers: true,
-      topics_to_avoid: []
+      tone: "fun_playful",
+      signature_phrases: ["stack it up", "drip", "scoop squad", "loaded", "treat yourself"]
     },
     personas: [
       {
         id: "persona-1",
         name: "Date Night Dani",
         emoji: "💑",
-        description: "Young couples seeking Instagram-worthy date experiences",
-        demographics: {
-          age_range: "25-35",
-          income_level: "middle",
-          location_types: ["urban", "suburban"],
-          family_status: ["married", "single"]
-        },
-        psychographics: {
-          pain_points: ["Limited date night options", "Wants to impress partner", "Looking for unique experiences"],
-          goals: ["Create memories", "Look good on social media", "Support local businesses"],
-          values: ["Authenticity", "Experience over things", "Visual appeal"]
-        },
-        social_behavior: {
-          platforms: ["instagram", "tiktok"],
-          content_types: ["video", "behind_scenes", "user_testimonials"],
-          best_times: ["evening", "weekends"]
-        },
-        real_example: "Alex and Jamie came in for their anniversary, ordered the 'Lovers Stack' (strawberry + chocolate), took 20 photos, tagged us in 3 posts. Came back twice in the same month."
+        who_are_they: "Young couples (25-35) seeking Instagram-worthy date night experiences",
+        main_problem: "Want unique, photogenic date spots that feel special and worth posting about",
+        platforms: ["instagram", "tiktok"],
+        real_example: "Alex and Jamie came for their anniversary, ordered the 'Lovers Stack' (strawberry + chocolate), took 20 photos, tagged us in 3 posts. Came back twice that month."
+      },
+      {
+        id: "persona-2",
+        name: "Event Planner Emma",
+        emoji: "🎉",
+        who_are_they: "Event coordinators and party planners booking dessert catering for corporate and private events",
+        main_problem: "Need reliable caterer with wow-factor desserts that impress clients and fit budget",
+        platforms: ["linkedin", "facebook", "google_business"],
+        real_example: "Emma books us for 3-4 company parties per year. Says our ice cream bars always get the most Instagram stories from attendees."
+      },
+      {
+        id: "persona-3",
+        name: "Treat Time Tom",
+        emoji: "👨‍👧",
+        who_are_they: "Parents treating kids after sports/school activities, looking for quick rewards",
+        main_problem: "Need affordable, kid-friendly treats that are convenient and nearby",
+        platforms: ["facebook", "google_business"],
+        real_example: "Tom brings his daughter every Thursday after soccer practice. Knows all the staff by name. Always gets the mini stack."
       }
-    ],
-    audience: {
-      primary: ["families", "college_students", "event_planners"],
-      platforms: ["instagram", "tiktok", "facebook"]
-    }
+    ]
   },
   quick_fix_plumbing: {
     id: "quick_fix_plumbing",
     business_name: "Quick Fix Plumbing",
     niche: "plumbing_service",
-    owner_name: "Mike",
     locations: ["Denver, CO"],
-    services: ["Emergency repairs", "Installations", "Maintenance", "Inspections"],
-    programs: [],
-    brand_identity: {
-      colors: ["#1E3A8A", "#F97316", "#FFFFFF"],
-      personality: ["reliable", "professional", "friendly", "fast"],
-      visual_style: "clean_modern"
-    },
+    what_we_offer: "Fast, reliable plumbing services for homes and businesses. We handle emergency repairs, installations, routine maintenance, and inspections. Same-day service available, upfront pricing, and guaranteed work.",
     voice: {
-      tones: ["professional_polished", "warm_friendly"],
-      loved_words: ["fast", "reliable", "honest", "guaranteed"],
-      banned_words: ["cheap", "discount", "bargain"]
+      tone: "professional_polished",
+      signature_phrases: ["fast response", "honest pricing", "done right", "guaranteed"]
     },
-    content_rules: {
-      show_owner: true,
-      show_staff: true,
-      show_customers: true,
-      topics_to_avoid: []
-    },
-    personas: [],
-    audience: {
-      primary: ["homeowners", "property_managers", "small_businesses"],
-      platforms: ["facebook", "google_business"]
-    }
+    personas: [
+      {
+        id: "persona-1",
+        name: "Fix-It Felix",
+        emoji: "🔧",
+        who_are_they: "Handy homeowners who usually DIY but hit a problem they can't solve",
+        main_problem: "Tried to fix it themselves, made it worse, need a pro ASAP without judgment",
+        platforms: ["google_business", "youtube"],
+        real_example: "Felix tried replacing a valve himself at 9pm, flooded the bathroom, called us embarrassed. We fixed it in 30 mins, showed him what went wrong, no judgment."
+      },
+      {
+        id: "persona-2",
+        name: "Clueless Carla",
+        emoji: "🤷‍♀️",
+        who_are_they: "New homeowners or renters who know nothing about plumbing systems",
+        main_problem: "Something's wrong but has no idea what, worried about being overcharged or talked down to",
+        platforms: ["facebook", "nextdoor"],
+        real_example: "Carla called worried about her water bill, didn't know what a flapper was. We explained everything in plain English, she became a regular."
+      },
+      {
+        id: "persona-3",
+        name: "Property Manager Pete",
+        emoji: "🏢",
+        who_are_they: "Property managers overseeing 10+ rental units, need reliable go-to plumber",
+        main_problem: "Tenant complaints pile up, needs same-day response and transparent billing for owners",
+        platforms: ["linkedin", "email"],
+        real_example: "Pete manages 15 properties, has us on speed dial. We respond within 2 hours, send detailed invoices to owners, he refers us to other managers."
+      }
+    ]
   },
   test_user: {
     id: "test_user",
     business_name: "Test Business",
     niche: "test",
-    owner_name: "Tester",
     locations: [],
-    services: [],
-    programs: [],
-    brand_identity: {
-      colors: [],
-      personality: [],
-      visual_style: ""
-    },
+    what_we_offer: "",
     voice: {
-      tones: [],
-      loved_words: [],
-      banned_words: []
-    },
-    content_rules: {
-      show_owner: true,
-      show_staff: true,
-      show_customers: true,
-      topics_to_avoid: []
+      tone: "",
+      signature_phrases: []
     },
     personas: [],
-    audience: {
-      primary: [],
-      platforms: []
-    },
     reset_on_load: true
   }
 };

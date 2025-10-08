@@ -6,31 +6,23 @@ const CURRENT_PROFILE_KEY = "current_profile_id";
 
 export const saveProfile = async (profile: BusinessProfile): Promise<void> => {
   try {
-    // Remove any legacy business field that might exist in the profile object
-    const { business, ...cleanProfile } = profile as any;
-    
     const { error } = await supabase
       .from('brand_profiles')
       .upsert({
-        id: cleanProfile.id,
-        business_name: cleanProfile.business_name,
-        niche: cleanProfile.niche || null,
-        owner_name: cleanProfile.owner_name || null,
-        locations: cleanProfile.locations || [],
-        services: cleanProfile.services || [],
-        programs: cleanProfile.programs as any,
-        brand_identity: cleanProfile.brand_identity as any,
-        voice: cleanProfile.voice as any,
-        content_rules: cleanProfile.content_rules as any,
-        personas: cleanProfile.personas as any,
-        audience: cleanProfile.audience as any,
+        id: profile.id,
+        business_name: profile.business_name,
+        niche: profile.niche || null,
+        locations: profile.locations || [],
+        what_we_offer: profile.what_we_offer || "",
+        voice: profile.voice as any,
+        personas: profile.personas as any,
       }, { onConflict: 'id' });
 
     if (error) {
       console.error("Supabase error details:", error);
       throw error;
     }
-    localStorage.setItem(CURRENT_PROFILE_KEY, cleanProfile.id);
+    localStorage.setItem(CURRENT_PROFILE_KEY, profile.id);
   } catch (error) {
     console.error("Error saving profile:", error);
     throw error;
