@@ -430,30 +430,24 @@ const Dashboard = () => {
 
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <div className="flex justify-center space-x-1 mb-2">
-                    {profile.brand_identity.colors.slice(0, 3).map((color, index) => (
-                      <div
-                        key={index}
-                        className="w-4 h-4 rounded-full border border-border"
-                        style={{ backgroundColor: color }}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-sm text-muted-foreground">Brand Colors</p>
+                  <p className="font-medium text-foreground mb-1">
+                    {profile.locations?.length || 0}
+                  </p>
+                  <p className="text-sm text-muted-foreground">Locations</p>
                 </div>
 
                 <div className="text-center">
                   <p className="font-medium text-foreground mb-1 capitalize">
-                    {profile.voice.tones?.join(", ") || "Not set"}
+                    {profile.voice?.tone?.replace(/_/g, " ") || "Not set"}
                   </p>
                   <p className="text-sm text-muted-foreground">Voice Tone</p>
                 </div>
 
                 <div className="text-center">
                   <p className="font-medium text-foreground mb-1">
-                    {profile.services?.length || 0}
+                    {profile.voice?.signature_phrases?.length || 0}
                   </p>
-                  <p className="text-sm text-muted-foreground">Services</p>
+                  <p className="text-sm text-muted-foreground">Signature Phrases</p>
                 </div>
 
                 <div className="text-center">

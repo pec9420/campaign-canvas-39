@@ -129,26 +129,18 @@ export function ReviewSuggestionsModal({
           {suggestions.locations &&
             renderComparison("Locations", currentProfile.locations, suggestions.locations, "locations")}
 
-          {suggestions.services &&
-            renderComparison("Services", currentProfile.services, suggestions.services, "services")}
+          {suggestions.what_we_offer &&
+            renderComparison("Services", currentProfile.what_we_offer, suggestions.what_we_offer, "what_we_offer")}
 
-          {suggestions.voice?.tones &&
-            renderComparison("Voice Tones", currentProfile.voice.tones, suggestions.voice.tones, "voice.tones")}
+          {suggestions.voice?.tone &&
+            renderComparison("Voice Tone", currentProfile.voice.tone, suggestions.voice.tone, "voice.tone")}
 
-          {suggestions.voice?.loved_words &&
+          {suggestions.voice?.signature_phrases &&
             renderComparison(
-              "Loved Words",
-              currentProfile.voice.loved_words,
-              suggestions.voice.loved_words,
-              "voice.loved_words"
-            )}
-
-          {suggestions.voice?.banned_words &&
-            renderComparison(
-              "Banned Words",
-              currentProfile.voice.banned_words,
-              suggestions.voice.banned_words,
-              "voice.banned_words"
+              "Signature Phrases",
+              currentProfile.voice.signature_phrases,
+              suggestions.voice.signature_phrases,
+              "voice.signature_phrases"
             )}
 
           {suggestions.personas &&

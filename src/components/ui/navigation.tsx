@@ -53,7 +53,7 @@ export function Navigation({ profile, onSwitchBusiness }: NavigationProps) {
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
               <span className="text-primary font-semibold text-sm">
-                {profile.business_name.charAt(0).toUpperCase()}
+                {profile.business_name?.charAt(0)?.toUpperCase() || 'B'}
               </span>
             </div>
             <div className="flex-1 min-w-0">
