@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,23 @@ export const PersonaModalSimplified = ({ persona, open, onClose, onSave, onDelet
       real_example: ""
     }
   );
+
+  // Reset form when persona prop changes or modal opens
+  useEffect(() => {
+    if (open) {
+      setFormData(
+        persona || {
+          id: `persona-${Date.now()}`,
+          name: "",
+          emoji: "👤",
+          who_are_they: "",
+          main_problem: "",
+          platforms: [],
+          real_example: ""
+        }
+      );
+    }
+  }, [persona, open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

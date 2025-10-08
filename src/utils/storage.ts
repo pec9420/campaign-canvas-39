@@ -13,7 +13,8 @@ export const saveProfile = async (profile: BusinessProfile): Promise<void> => {
         business_name: profile.business_name,
         niche: profile.niche || null,
         locations: profile.locations || [],
-        what_we_offer: profile.what_we_offer || "",
+        // Map what_we_offer to services array for now (schema compatibility)
+        services: profile.what_we_offer ? [profile.what_we_offer] : [],
         voice: profile.voice as any,
         personas: profile.personas as any,
       }, { onConflict: 'id' });
@@ -38,7 +39,14 @@ export const getProfile = async (id: string): Promise<BusinessProfile | null> =>
       .maybeSingle();
 
     if (error) throw error;
-    return data as unknown as BusinessProfile | null;
+    if (!data) return null;
+
+    // Map services array back to what_we_offer for schema compatibility
+    const profile = data as any;
+    return {
+      ...profile,
+      what_we_offer: profile.services?.[0] || profile.what_we_offer || "",
+    } as unknown as BusinessProfile;
   } catch (error) {
     console.error("Error loading profile:", error);
     return null;
@@ -55,7 +63,11 @@ export const getAllProfiles = async (): Promise<Record<string, BusinessProfile>>
 
     const profiles: Record<string, BusinessProfile> = {};
     (data || []).forEach((profile: any) => {
-      profiles[profile.id] = profile as unknown as BusinessProfile;
+      // Map services array back to what_we_offer for schema compatibility
+      profiles[profile.id] = {
+        ...profile,
+        what_we_offer: profile.services?.[0] || profile.what_we_offer || "",
+      } as unknown as BusinessProfile;
     });
     return profiles;
   } catch (error) {

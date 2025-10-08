@@ -421,24 +421,38 @@ const BrandHubSimplified = () => {
               </Card>
             ))}
 
-            {/* Add Persona Card */}
-            <Card
-              onClick={() => {
-                setCurrentPersona(null);
-                setShowPersonaModal(true);
-              }}
-              className="p-6 border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 cursor-pointer transition-all flex items-center justify-center min-h-[200px]"
-            >
-              <div className="text-center">
-                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <Plus className="w-6 h-6 text-primary" />
+            {/* Add Persona Card - Show only if less than 6 personas */}
+            {(profile.personas || []).length < 6 && (
+              <Card
+                onClick={() => {
+                  setCurrentPersona(null);
+                  setShowPersonaModal(true);
+                }}
+                className="p-6 border-2 border-dashed border-muted-foreground/30 hover:border-primary/50 cursor-pointer transition-all flex items-center justify-center min-h-[200px]"
+              >
+                <div className="text-center">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                    <Plus className="w-6 h-6 text-primary" />
+                  </div>
+                  <p className="font-medium">
+                    {(profile.personas || []).length === 0 ? 'Add Your First Persona' : 'Add Another Persona'}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {6 - (profile.personas || []).length} more allowed • 2-3 min to create
+                  </p>
                 </div>
-                <p className="font-medium">
-                  {(profile.personas || []).length === 0 ? 'Add Your First Persona' : 'Add Another Persona'}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">2-3 minutes to create</p>
-              </div>
-            </Card>
+              </Card>
+            )}
+
+            {/* Max personas message */}
+            {(profile.personas || []).length >= 6 && (
+              <Card className="p-6 border-2 border-muted-foreground/20 flex items-center justify-center min-h-[200px]">
+                <div className="text-center text-muted-foreground">
+                  <p className="font-medium">Maximum 6 personas reached</p>
+                  <p className="text-xs mt-1">Edit or delete existing personas to add more</p>
+                </div>
+              </Card>
+            )}
           </div>
 
           {/* Persona Examples */}
