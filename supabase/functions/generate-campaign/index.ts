@@ -41,9 +41,16 @@ serve(async (req) => {
 
   } catch (error) {
     console.error("Error in generate-campaign:", error);
+
+    // Return detailed error for debugging
+    const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+    const errorStack = error instanceof Error ? error.stack : "";
+
     return new Response(
       JSON.stringify({
-        error: error instanceof Error ? error.message : "An unknown error occurred"
+        error: errorMessage,
+        details: errorStack,
+        timestamp: new Date().toISOString()
       }),
       {
         status: 500,

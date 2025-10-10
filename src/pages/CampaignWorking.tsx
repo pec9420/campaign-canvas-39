@@ -57,6 +57,12 @@ const CampaignWorking = () => {
     setLoading(true);
 
     try {
+      console.log("Calling generate-campaign edge function with:", {
+        stage: 'persona_strategy',
+        campaign_goal: campaignGoal,
+        business_name: profile.business_name
+      });
+
       const { data, error } = await supabase.functions.invoke('generate-campaign', {
         body: {
           stage: 'persona_strategy',
@@ -71,10 +77,21 @@ const CampaignWorking = () => {
 
       if (error) {
         console.error("Error generating persona strategies:", error);
-        toast.error(error.message || "Failed to generate strategies");
+        console.error("Full error details:", JSON.stringify(error, null, 2));
+
+        // Try to extract detailed error from response
+        const errorMsg = data?.error || error.message || "Failed to generate strategies";
+        const errorDetails = data?.details || "";
+
+        console.error("Edge function error:", errorMsg);
+        if (errorDetails) console.error("Stack trace:", errorDetails);
+
+        toast.error(errorMsg);
         setLoading(false);
         return;
       }
+
+      console.log("Raw API response:", JSON.stringify(data, null, 2));
 
       console.log("Persona strategies generated:", data);
       setPersonaStrategies(data);
@@ -114,10 +131,13 @@ const CampaignWorking = () => {
 
       if (error) {
         console.error("Error generating content calendar:", error);
+        console.error("Full error details:", JSON.stringify(error, null, 2));
         toast.error(error.message || "Failed to generate calendar");
         setLoading(false);
         return;
       }
+
+      console.log("Raw API response:", JSON.stringify(data, null, 2));
 
       console.log("Content calendar generated:", data);
       setContentCalendar(data);
