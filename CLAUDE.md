@@ -57,6 +57,9 @@ campaign-canvas-39/
 │   │   ├── profiles.ts                  # BusinessProfile & Persona interfaces
 │   │   └── mockCampaigns.ts             # Mock campaign data
 │   │
+│   ├── config/
+│   │   └── campaignPrompts.ts           # ✅ NEW: Agent prompts (312 lines)
+│   │
 │   ├── utils/
 │   │   └── storage.ts                   # Supabase + localStorage helpers
 │   │
@@ -70,8 +73,10 @@ campaign-canvas-39/
 ├── supabase/
 │   ├── migrations/                      # Database migrations
 │   └── functions/
-│       └── process-brand-upload/        # Edge function for AI file processing
-│           └── index.ts
+│       ├── process-brand-upload/        # Edge function for AI file processing
+│       │   └── index.ts
+│       └── generate-campaign/           # ✅ NEW: Multi-agent campaign generator
+│           └── index.ts                 # 467 lines, 3-stage system
 │
 ├── SETUP_GUIDE.md                       # Setup instructions
 ├── BRAND_HUB_IMPLEMENTATION.md          # Feature docs
@@ -156,28 +161,15 @@ interface BusinessProfile {
 - **Stack Creamery**: Date Night Dani 💑, Event Planner Emma 🎉, Treat Time Tom 👨‍👧
 - **Quick Fix Plumbing**: Fix-It Felix 🔧, Clueless Carla 🤷‍♀️, Property Manager Pete 🏢
 
-### 3. Campaign Generation
+### 3. Campaign Generation (Multi-Agent System) ✅ IMPLEMENTED
 
-**Flow**:
-1. User sets campaign goal ("Get more weekend bookings")
-2. Selects primary persona (Date Night Dani)
-3. Optional: secondary persona (Treat Time Tom)
-4. AI generates campaign using:
-   - Business context (location, offerings, tone)
-   - Persona details (problem, platforms)
-   - Campaign goal
+**Status**: Fully implemented as of Oct 9, 2025
 
-**AI Prompt Structure**:
-```
-Business: Stack Creamery (Springfield, IL)
-Offering: Over-the-top ice cream with Instagram-worthy presentations
-Voice: Fun & playful ("stack it up", "drip", "loaded")
-Target: Date Night Dani - Young couples wanting photogenic date spots
-Goal: Get more weekend bookings
-Platforms: Instagram, TikTok
+**Core Differentiator**: High-quality, human-sounding content that avoids AI slop through strategic depth and natural cadence.
 
-→ Generate: 7-day campaign with post scripts, hashtags, timing
-```
+**Architecture**: Three-stage agent system (Strategy → Calendar → Copywriter)
+
+See detailed documentation in **"Campaign Generation Agent System"** section below.
 
 ---
 
@@ -211,6 +203,468 @@ const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions
 - Same behavior as production
 
 **Free Tier**: Until Oct 13, 2025, all Gemini calls are FREE
+
+---
+
+## Campaign Generation Agent System
+
+**Status**: ✅ Fully Implemented (Oct 9, 2025)
+**Location**: `src/config/campaignPrompts.ts` + `supabase/functions/generate-campaign/index.ts`
+
+### Philosophy: Avoiding AI Slop
+
+**Problem**: Most AI-generated marketing content is generic, buzzword-filled, and obviously not human-written. This creates user distrust and poor engagement.
+
+**Solution**: Multi-agent system that separates strategic thinking from tactical execution, with built-in "natural cadence" rules.
+
+**Key Differentiator**: Content that sounds like a person talking, not a polished marketing message.
+
+---
+
+### Architecture: Three-Stage Agent System
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  STAGE 1: PERSONA STRATEGY AGENT                            │
+│  Input: Business goal in natural language                   │
+│  Output: Recommended personas + emotional strategy          │
+│  User Action: Review/edit/approve                           │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  STAGE 2: CONTENT CALENDAR AGENT                            │
+│  Input: Approved persona strategies                         │
+│  Output: Day-by-day strategic content plan                  │
+│  User Action: Review calendar                               │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│  STAGE 3: COPYWRITER AGENT (Simple MVP)                     │
+│  Input: Individual post strategy                            │
+│  Output: Natural-sounding copy + hashtags                   │
+│  User Action: Edit/approve copy                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### Stage 1: Persona Strategy Agent
+
+**Mental Model Shift**: Business owners think in business goals ("promote new flavor"), NOT personas. Agent does the strategic translation.
+
+**User Input**:
+```javascript
+{
+  "campaign_goal": "Promote new strawberry cheesecake flavor, get people in this weekend",
+  "duration_days": 7
+}
+```
+
+**Agent Analysis**:
+1. Reviews ALL personas in BusinessProfile
+2. Determines which personas care about THIS specific goal
+3. Explains WHY each persona is relevant (not generic)
+4. Defines emotional strategy per persona
+5. Assigns high-intent actions (saves > likes)
+
+**Agent Output**:
+```javascript
+{
+  "campaign_goal": "Promote new strawberry cheesecake flavor, drive weekend traffic",
+  "persona_strategies": [
+    {
+      "persona_name": "Date Night Dani",
+      "persona_emoji": "💑",
+      "why_target_them": "New flavors create Instagram-worthy moments. Dani seeks unique date experiences worth posting about. Strawberry cheesecake is visually striking + trendy.",
+      "key_message": "Springfield's newest must-photograph date night moment",
+      "desired_emotion": "FOMO + curiosity",
+      "emotional_driver": "Fear of missing the next trending spot. Curiosity about what makes it photo-worthy.",
+      "immediate_action": "save_post",
+      "action_intent_level": "high",
+      "platforms": ["instagram", "tiktok"],
+      "expected_outcome": "20-30 couples, weekend evening traffic 6-10pm"
+    },
+    {
+      "persona_name": "Treat Time Tom",
+      "persona_emoji": "👨‍👧",
+      "why_target_them": "Parents looking for special treats to surprise kids. New flavor = excitement factor. Strawberry cheesecake appeals to kids' taste.",
+      "key_message": "Surprise the kids with something they haven't tried yet",
+      "desired_emotion": "excitement + anticipation",
+      "emotional_driver": "Want to be the hero parent who brings something new and exciting. Anticipation of kids' happy reactions.",
+      "immediate_action": "share_with_coparent",
+      "action_intent_level": "high",
+      "platforms": ["facebook", "google_business"],
+      "expected_outcome": "25-35 families, weekend afternoon traffic 2-6pm"
+    }
+  ],
+  "strategy_summary": "Double-pronged approach: Create visual buzz with couples (evening traffic) while targeting parents for family visits (afternoon traffic). Both personas respond to 'newness' but need different emotional hooks."
+}
+```
+
+**Approval Gate**: User reviews, can edit messages/emotions/personas before proceeding to Stage 2.
+
+---
+
+### Stage 2: Content Calendar Agent
+
+**Input**: Approved persona strategies from Stage 1
+
+**Agent Responsibilities**:
+1. Orchestrate customer journey: Awareness → Consideration → Conversion
+2. Distribute posts across personas and platforms
+3. Match timing to persona behavior (parents: afternoon, couples: evening)
+4. Assign emotions and actions from Stage 1
+5. Create strategic direction (WHAT/WHY, not HOW)
+
+**Agent Output**:
+```javascript
+{
+  "content_calendar": {
+    "overview": {
+      "total_posts": 12,
+      "platform_breakdown": {"instagram": 5, "tiktok": 3, "facebook": 4},
+      "flow": "Days 1-3: Awareness (curiosity building) → Days 4-5: Consideration (social proof) → Days 6-7: Conversion (urgency)"
+    },
+    "posts": [
+      {
+        "day": 1,
+        "post_id": "P1",
+        "time_of_day": "7:00 PM",
+
+        "target_persona": "Date Night Dani",
+        "platform": "instagram",
+        "format": "reel",
+
+        "desired_emotion": "curiosity",
+        "emotional_hook": "Make them wonder what's special about this flavor that everyone's talking about",
+
+        "immediate_action": "save_post",
+        "action_intent_level": "high",
+        "engagement_goal": "100+ saves",
+        "why_this_action": "Saves indicate planning intent - they're bookmarking to show partner or visit later. Higher conversion signal than likes.",
+
+        "journey_stage": "awareness",
+        "content_direction": "Tease the visual reveal of the strawberry cheesecake stack without showing full product. Focus on anticipation and aesthetic appeal.",
+        "key_message": "Springfield's newest must-see dessert",
+
+        "cta_goal": "save_post_or_tag_friend",
+        "cta_rationale": "Tagging = social planning behavior. Saving = personal intent. Both are high-value actions.",
+
+        "primary_metric": "saves",
+        "secondary_metrics": ["shares", "profile_visits"],
+        "vanity_metrics_ignore": ["likes", "general_comments"]
+      }
+      // ... more posts
+    ]
+  }
+}
+```
+
+**Key Concepts**:
+- **Journey Stages**:
+  - Awareness (Days 1-40%): Create curiosity/FOMO
+  - Consideration (Days 40-70%): Build trust, social proof
+  - Conversion (Days 70-100%): Create urgency, drive action
+- **Engagement Intent Hierarchy**:
+  - HIGH: saves, shares_to_specific_person, link_clicks, dm_questions
+  - MEDIUM: shares_general, story_replies, comments_social
+  - LOW: likes_only, views_without_action (vanity metrics)
+- **Content Direction**: Strategic intent (what to show and why), NOT creative execution (how to shoot/edit)
+
+---
+
+### Stage 3: Copywriter Agent (Simple MVP)
+
+**Input**: Individual post strategy from Stage 2 + BusinessProfile + Persona
+
+**Goal**: Write copy that sounds like a PERSON talking, not a polished marketing message.
+
+**Natural Cadence Rules**:
+```
+✅ DO:
+- Write like texting a friend
+- Use conversational fillers ("like", "literally", "okay but", "wait", "anyway")
+- Lowercase is fine if it fits the vibe
+- Incomplete sentences are GOOD
+- Vary sentence length (short. long rambling sentence. short.)
+- Use signature phrases naturally
+- Can break grammar rules for authentic voice
+
+❌ NEVER:
+- "Elevate", "Unlock", "Imagine this", "Picture this", "Ready to [verb]"
+- Buzzword soup: "next level", "game-changer", "transform your"
+- Overly enthusiastic emojis (1-3 max, placed naturally)
+- Formulaic structures (not everything needs to be "3 tips")
+```
+
+**Example Output**:
+```javascript
+{
+  "hook": "wait omg have you been to Stack Creamery yet",
+  "script": "because if date night has been feeling kinda basic lately... this is your sign\n\nthe new strawberry cheesecake flavor is insane (loaded with toppings, towering situation)\n\nperfect for those 'we need a pic for the gram' moments\n\nSpringfield friends where have you been hiding this 👀\n\nopen late this weekend, link in bio if you wanna see the full menu",
+  "hashtags": ["#SpringfieldIL", "#DateNightIdeas", "#StackCreamery"],
+  "visual_direction": "POV: couple's hands holding phones up to capture the stack, faces in background smiling/laughing"
+}
+```
+
+**Compare to AI Slop**:
+```
+❌ Generic AI Output:
+"Elevate your date night experience with our artisanal strawberry cheesecake creation!
+Perfect for couples seeking Instagram-worthy moments. Visit us today! 🍦✨"
+
+✅ Natural Human Output:
+"wait omg have you been to Stack Creamery yet...
+because if date night has been feeling kinda basic lately, this is your sign"
+```
+
+**Difference**:
+- Conversational fillers ("wait omg", "kinda")
+- Incomplete thoughts ("...")
+- No marketing buzzwords ("elevate", "artisanal")
+- Has personality/opinion
+- Sounds like texting a friend
+
+---
+
+### Implementation Details
+
+**Files**:
+1. **`src/config/campaignPrompts.ts`** (312 lines)
+   - System prompts for all 3 agents
+   - User prompt builders with dynamic data injection
+   - Helper functions (calculatePostCount)
+
+2. **`supabase/functions/generate-campaign/index.ts`** (467 lines)
+   - Main handler routes to 3 stages
+   - `handlePersonaStrategy()` - Stage 1
+   - `handleContentCalendar()` - Stage 2
+   - `handleCopywriter()` - Stage 3
+   - Shared `callAI()` utility for Gemini calls
+
+**API Usage**:
+
+```javascript
+// Stage 1: Generate persona strategies
+POST /functions/v1/generate-campaign
+{
+  "stage": "persona_strategy",
+  "profile": { /* BusinessProfile */ },
+  "brief": {
+    "campaign_goal": "Promote new flavor, get weekend traffic",
+    "duration_days": 7
+  }
+}
+
+// Stage 2: Generate content calendar
+POST /functions/v1/generate-campaign
+{
+  "stage": "content_calendar",
+  "profile": { /* BusinessProfile */ },
+  "brief": { /* CampaignBrief */ },
+  "approvedStrategies": { /* Result from Stage 1 */ }
+}
+
+// Stage 3: Generate copy for a post
+POST /functions/v1/generate-campaign
+{
+  "stage": "copywriter",
+  "profile": { /* BusinessProfile */ },
+  "persona": { /* Specific Persona */ },
+  "postStrategy": { /* Single post from Stage 2 */ }
+}
+```
+
+---
+
+### Design Decisions & Rationale
+
+**Why Three Stages Instead of One?**
+- **Separation of Concerns**: Strategy ≠ Execution
+- **User Control**: Approval gates at strategic decision points
+- **Quality**: Each agent specializes in one thing
+- **Debugging**: Easier to identify where things go wrong
+
+**Why Agent Analyzes All Personas (Not User-Selected)?**
+- **Mental Model**: Owners think "promote new product", not "target Date Night Dani"
+- **Discovery**: Agent may identify personas owner didn't consider
+- **Education**: Explains WHY certain audiences matter
+- **Efficiency**: One goal can hit multiple personas with different angles
+
+**Why Emotion-Driven vs. Feature-Driven?**
+- **Psychology**: People buy based on emotion, justify with logic
+- **Engagement**: Curiosity/FOMO drives saves/shares better than product features
+- **Natural Copy**: "Make them excited" is easier instruction than "list 3 benefits"
+
+**Why Engagement Intent Hierarchy?**
+- **Conversion Focus**: Saves/shares indicate planning behavior (high intent)
+- **Vanity Metrics**: Likes feel good but don't drive business outcomes
+- **Strategic Metrics**: Agent optimizes for actions that lead to conversions
+
+**Why Real Examples Optional?**
+- **User Friction**: Not all owners have documented customer stories
+- **Inference**: Agent can create believable scenarios from persona description
+- **Authenticity**: When available, real examples make content feel genuine
+
+**Why Natural Cadence Rules?**
+- **Trust Signal**: "Sounds like person talking" = higher engagement
+- **Differentiation**: Most AI content is obviously robotic
+- **Platform Fit**: Social media rewards conversational tone over formal marketing
+
+---
+
+### Anti-Slop Mechanisms
+
+**1. Banned Phrase List**
+- "Elevate", "Unlock", "Imagine this", "Picture this", "Ready to [verb]"
+- "Next level", "Game-changer", "Transform your"
+- Forces agent to find natural alternatives
+
+**2. Specificity Requirements**
+- Must reference location (Springfield, IL not "your area")
+- Must reference persona's specific problem
+- Must use signature phrases naturally
+- Generic = rejected
+
+**3. Engagement Intent Focus**
+- Can't just say "increase engagement"
+- Must specify: "100+ saves (planning behavior)"
+- Explains WHY this metric matters for conversion
+
+**4. Journey Architecture**
+- Posts must progress: Awareness → Consideration → Conversion
+- Can't be random disconnected content
+- Each post advances customer toward action
+
+**5. Emotional Strategy**
+- Can't be vague "make them interested"
+- Must specify: "curiosity about what makes it photo-worthy"
+- Explains psychological driver behind emotion
+
+---
+
+### What Makes This System Special
+
+**1. Strategic Depth Over Tactical Spam**
+- Thinks in customer journeys, not random posts
+- Orchestrates multi-persona campaigns coherently
+- Explains reasoning at every step
+
+**2. Business Owner Mental Model**
+- Owner thinks in business goals, agent translates to personas
+- No cognitive burden to "think in frameworks"
+- Educational - shows WHY certain approaches work
+
+**3. High-Intent Action Focus**
+- Optimizes for conversions, not vanity metrics
+- Understands saves/shares > likes
+- Explains relationship between action and business outcome
+
+**4. Natural Human Voice**
+- Avoids AI slop through cadence rules
+- Sounds like texting a friend, not writing ad copy
+- Can break grammar rules for authenticity
+
+**5. Approval Gates**
+- User reviews strategy before content generation
+- Can edit personas/emotions/messages
+- Maintains control while leveraging AI intelligence
+
+**6. Real Example Integration**
+- Uses customer stories when available
+- Infers believable scenarios when not
+- Never sounds generic
+
+---
+
+### Future Enhancements (Not Yet Implemented)
+
+**Content Creation**:
+- [ ] Deep copywriter session to refine natural cadence
+- [ ] Platform-specific voice variations (Instagram vs LinkedIn)
+- [ ] A/B testing different copy approaches
+- [ ] Slop detection scoring system
+
+**Strategy Improvements**:
+- [ ] Multi-campaign orchestration (how campaigns relate over time)
+- [ ] Seasonal strategy recommendations
+- [ ] Competitive analysis integration
+- [ ] Performance feedback loop (what worked/didn't)
+
+**User Experience**:
+- [ ] Frontend UI for Stage 1 (persona strategy approval)
+- [ ] Frontend UI for Stage 2 (content calendar view)
+- [ ] Frontend UI for Stage 3 (copy editing interface)
+- [ ] Visual campaign timeline
+- [ ] Export to scheduling tools (Buffer, Hootsuite)
+
+**Analytics**:
+- [ ] Track actual engagement vs. predicted
+- [ ] Measure high-intent actions (saves, shares)
+- [ ] Campaign performance dashboard
+- [ ] ROI attribution
+
+---
+
+### Testing & Quality Assurance
+
+**Manual Testing Checklist**:
+
+**Stage 1: Persona Strategy**
+- [ ] Agent recommends only relevant personas
+- [ ] Emotional strategies match persona psychology
+- [ ] Expected outcomes are concrete (not vague)
+- [ ] Action intent levels align with journey stage
+- [ ] Strategy summary explains reasoning
+
+**Stage 2: Content Calendar**
+- [ ] Posts progress through journey stages (A→C→C)
+- [ ] Timing matches persona behavior
+- [ ] Emotions/actions match Stage 1 approval
+- [ ] No repetitive formats or messages
+- [ ] Platform distribution matches persona preferences
+
+**Stage 3: Copywriter**
+- [ ] Copy sounds natural, not robotic
+- [ ] No banned phrases used
+- [ ] Signature phrases used naturally (not forced)
+- [ ] Location referenced specifically
+- [ ] Persona's problem addressed
+- [ ] CTA drives intended action
+
+**Integration Testing**:
+- [ ] Stage 1 output feeds cleanly into Stage 2
+- [ ] Stage 2 output feeds cleanly into Stage 3
+- [ ] All three stages use same BusinessProfile data
+- [ ] Approved strategies persist correctly
+
+---
+
+### Troubleshooting
+
+**Agent Returns Generic Strategies**:
+- Check if persona descriptions are specific enough
+- Verify `real_example` is being included in prompt
+- Review persona's `main_problem` - is it concrete?
+- Check if `signature_phrases` are distinctive
+
+**Copy Sounds Too Formal/Robotic**:
+- Verify brand `voice.tone` is set correctly
+- Check if banned phrases are in output (shouldn't be)
+- Review prompt - ensure "natural cadence rules" are included
+- Test with different tone settings
+
+**Persona Recommendations Don't Make Sense**:
+- Verify campaign goal is clear and specific
+- Check persona `who_are_they` descriptions
+- Ensure persona `main_problem` relates to business offering
+- Review agent's `why_target_them` reasoning
+
+**Posts Don't Follow Journey Stages**:
+- Check if Stage 1 strategies defined clear emotions
+- Verify duration_days calculation is correct
+- Review post distribution across personas
+- Ensure actions match intent levels (awareness=save, conversion=click)
 
 ---
 
@@ -445,18 +899,33 @@ Already configured in Lovable Cloud:
 ### Current Limitations
 
 - [ ] File upload shows modal but doesn't process yet
-- [ ] Campaign generation uses mock data (needs AI integration)
+- [ ] ~~Campaign generation uses mock data~~ ✅ **FIXED**: Multi-agent system implemented (Oct 9, 2025)
+- [ ] **Frontend UI needed for campaign generation stages** (Stage 1, 2, 3 approval flows)
 - [ ] No user authentication (single user mode)
 - [ ] Dashboard stats are placeholder
+
+### Next Priorities (Post-Campaign Agent)
+
+**Frontend Integration** (High Priority):
+- [ ] UI for Stage 1: Persona strategy input & approval
+- [ ] UI for Stage 2: Content calendar visualization
+- [ ] UI for Stage 3: Copy editing interface
+- [ ] Visual campaign timeline/calendar view
+
+**Copywriter Agent Deep Dive** (Planned separate session):
+- [ ] Refine natural cadence rules
+- [ ] Platform-specific voice variations
+- [ ] A/B testing framework
+- [ ] Slop detection scoring
 
 ### Future Enhancements
 
 - [ ] AI-assist buttons ("Generate persona from description")
-- [ ] Campaign calendar view
-- [ ] Analytics dashboard
+- [ ] Analytics dashboard with high-intent action tracking
 - [ ] Multi-user support with auth
-- [ ] Export campaigns to scheduling tools
+- [ ] Export campaigns to scheduling tools (Buffer, Hootsuite)
 - [ ] Advanced fields as collapsible sections
+- [ ] Campaign performance feedback loop
 
 ---
 
@@ -499,6 +968,8 @@ supabase start
 2. **`src/components/PersonaModalSimplified.tsx`** - Persona creator
 3. **`src/data/profiles.ts`** - Interfaces and demo data
 4. **`src/utils/storage.ts`** - Data persistence
+5. **`src/config/campaignPrompts.ts`** - ✅ NEW: Campaign agent prompts (312 lines)
+6. **`supabase/functions/generate-campaign/index.ts`** - ✅ NEW: Multi-agent system (467 lines)
 
 ### Configuration Files
 
@@ -575,5 +1046,29 @@ supabase db studio  # Opens local DB UI
 
 ---
 
-*Last Updated: October 2025*
-*Project Version: MVP - Simplified Brand Hub*
+## Recent Major Updates
+
+### Campaign Generation Agent System (Oct 9, 2025)
+
+**What Changed**: Complete rewrite of campaign generation as a sophisticated multi-agent system.
+
+**Files Added**:
+- `src/config/campaignPrompts.ts` (312 lines)
+- `supabase/functions/generate-campaign/index.ts` (467 lines)
+
+**Key Features**:
+- Three-stage agent system (Persona Strategy → Content Calendar → Copywriter)
+- Business owner mental model (natural language goals)
+- Emotion-driven strategy with high-intent action focus
+- Anti-AI-slop mechanisms (natural cadence rules, banned phrases)
+- Approval gates at each stage
+- Customer journey orchestration (Awareness → Consideration → Conversion)
+
+**Philosophy**: "Content that sounds like a person talking, not a polished marketing message"
+
+**Status**: Backend fully implemented, frontend UI integration needed
+
+---
+
+*Last Updated: October 9, 2025*
+*Project Version: MVP - Campaign Generation Agent System*

@@ -16,20 +16,24 @@ import { Badge } from "@/components/ui/badge";
 import { getCurrentProfile } from "@/utils/storage";
 import { BusinessProfile, Persona } from "@/data/profiles";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, ArrowLeft, CheckCircle2 } from "lucide-react";
+import { Sparkles, ArrowLeft, CheckCircle2, Check, Edit } from "lucide-react";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 
 const CampaignWorking = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
-  const [selectedPersona, setSelectedPersona] = useState<Persona | null>(null);
   const [campaignGoal, setCampaignGoal] = useState("");
   const [targetOutcome, setTargetOutcome] = useState("");
   const [duration, setDuration] = useState("14");
+
+  // Multi-stage flow state
+  const [currentStage, setCurrentStage] = useState(1); // 1 = Brief, 2 = Strategy, 3 = Calendar
   const [loading, setLoading] = useState(false);
-  const [loadingStep, setLoadingStep] = useState(1);
+  const [personaStrategies, setPersonaStrategies] = useState<any>(null); // Stage 1 results
+  const [contentCalendar, setContentCalendar] = useState<any>(null); // Stage 2 results
 
   useEffect(() => {
     const loadData = async () => {
@@ -43,28 +47,20 @@ const CampaignWorking = () => {
     loadData();
   }, [navigate]);
 
-  const handlePersonaSelect = (persona: Persona) => {
-    setSelectedPersona(persona);
-  };
-
-  const handleGenerateCampaign = async () => {
-    if (!profile || !selectedPersona || !campaignGoal || !targetOutcome) {
-      toast.error("Please fill in all fields and select a persona");
+  // Stage 1: Generate persona strategies
+  const handleStage1 = async () => {
+    if (!profile || !campaignGoal) {
+      toast.error("Please fill in the campaign goal");
       return;
     }
 
     setLoading(true);
-    setLoadingStep(1);
 
     try {
-      // Simulate agent progress
-      setTimeout(() => setLoadingStep(2), 2000);
-      setTimeout(() => setLoadingStep(3), 4000);
-
       const { data, error } = await supabase.functions.invoke('generate-campaign', {
         body: {
+          stage: 'persona_strategy',
           profile,
-          persona: selectedPersona,
           brief: {
             campaign_goal: campaignGoal,
             target_outcome: targetOutcome,
@@ -74,44 +70,64 @@ const CampaignWorking = () => {
       });
 
       if (error) {
-        console.error("Error generating campaign:", error);
-        toast.error(error.message || "Failed to generate campaign");
+        console.error("Error generating persona strategies:", error);
+        toast.error(error.message || "Failed to generate strategies");
         setLoading(false);
         return;
       }
 
-      console.log("Campaign generated:", data);
-
-      // Save to database
-      const { data: savedCampaign, error: saveError } = await supabase
-        .from('campaigns')
-        .insert({
-          profile_id: profile.id,
-          persona_id: selectedPersona.id,
-          campaign_goal: campaignGoal,
-          target_outcome: targetOutcome,
-          duration_days: parseInt(duration),
-          strategy: data.strategy,
-          status: 'draft'
-        })
-        .select()
-        .single();
-
-      if (saveError) {
-        console.error("Error saving campaign:", saveError);
-        toast.error("Failed to save campaign");
-        setLoading(false);
-        return;
-      }
-
-      toast.success("Campaign generated successfully! 🎉");
-      
-      // Navigate to results page
-      navigate(`/campaign-results?campaignId=${savedCampaign.id}`);
+      console.log("Persona strategies generated:", data);
+      setPersonaStrategies(data);
+      setCurrentStage(2);
+      toast.success("Persona strategies generated! Review and approve to continue.");
 
     } catch (error) {
       console.error("Error:", error);
-      toast.error("An error occurred while generating the campaign");
+      toast.error("An error occurred during strategy generation");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Stage 2: Generate content calendar
+  const handleStage2 = async () => {
+    if (!profile || !personaStrategies) {
+      toast.error("Missing persona strategies");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('generate-campaign', {
+        body: {
+          stage: 'content_calendar',
+          profile,
+          brief: {
+            campaign_goal: campaignGoal,
+            target_outcome: targetOutcome,
+            duration_days: parseInt(duration)
+          },
+          approvedStrategies: personaStrategies
+        }
+      });
+
+      if (error) {
+        console.error("Error generating content calendar:", error);
+        toast.error(error.message || "Failed to generate calendar");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Content calendar generated:", data);
+      setContentCalendar(data);
+      setCurrentStage(3);
+      toast.success("Content calendar generated!");
+
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("An error occurred during calendar generation");
+    } finally {
       setLoading(false);
     }
   };
@@ -122,94 +138,38 @@ const CampaignWorking = () => {
 
   if (!profile) return null;
 
+  // Loading overlay
   if (loading) {
-    const agents = [
-      {
-        id: 1,
-        name: "Strategist",
-        icon: "🧠",
-        task: "Analyzing your brand and persona...",
-        completed: loadingStep > 1,
-        active: loadingStep === 1
-      },
-      {
-        id: 2,
-        name: "Content Creator",
-        icon: "✍️",
-        task: "Crafting platform-specific posts...",
-        completed: loadingStep > 2,
-        active: loadingStep === 2
-      },
-      {
-        id: 3,
-        name: "Performance Analyst",
-        icon: "📊",
-        task: "Setting KPIs and success metrics...",
-        completed: loadingStep > 3,
-        active: loadingStep === 3
-      }
-    ];
+    const loadingMessage = currentStage === 1
+      ? "Analyzing your business goal and recommending persona strategies..."
+      : "Generating content calendar with strategic posts...";
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-purple-500/5 to-background flex items-center justify-center p-6">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm"></div>
         <Card className="relative z-10 p-12 max-w-lg w-full bg-card/95 backdrop-blur border shadow-2xl">
           <div className="text-center">
-            <div className="relative mb-8">
-              <div className="w-24 h-24 bg-gradient-to-br from-primary to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
-                <Sparkles className="w-12 h-12 text-white animate-spin" />
-              </div>
-              <div className="w-32 h-2 bg-muted rounded-full mx-auto">
-                <div
-                  className="h-full bg-gradient-to-r from-primary to-purple-500 rounded-full transition-all duration-1000"
-                  style={{ width: `${(loadingStep / 3) * 100}%` }}
-                />
-              </div>
+            <div className="w-24 h-24 bg-gradient-to-br from-primary to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
+              <Sparkles className="w-12 h-12 text-white animate-spin" />
             </div>
-
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                Creating Your Campaign
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Our AI agents are working their magic...
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              {agents.map((agent) => (
-                <div
-                  key={agent.id}
-                  className={`flex items-center space-x-4 p-4 rounded-lg transition-all duration-300 ${
-                    agent.completed
-                      ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
-                      : agent.active
-                      ? "bg-primary/10 border border-primary/30"
-                      : "bg-muted/50"
-                  }`}
-                >
-                  <div className="text-2xl">{agent.icon}</div>
-                  <div className="flex-1 text-left">
-                    <p className="font-medium">
-                      {agent.completed ? "✓ Complete" : agent.active ? "🔄 In progress" : "⏳ Waiting"}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Agent {agent.id}: {agent.name}
-                    </p>
-                    {agent.active && (
-                      <p className="text-sm text-primary">
-                        {agent.task}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              AI Agent Working
+            </h2>
+            <p className="text-lg text-muted-foreground">
+              {loadingMessage}
+            </p>
           </div>
         </Card>
       </div>
     );
   }
+
+  // Stepper UI
+  const steps = [
+    { number: 1, label: "Campaign Brief", completed: currentStage > 1 },
+    { number: 2, label: "Persona Strategy", completed: currentStage > 2 },
+    { number: 3, label: "Content Calendar", completed: currentStage > 3 },
+  ];
 
   return (
     <DashboardLayout
@@ -217,7 +177,7 @@ const CampaignWorking = () => {
       profile={profile}
       onSwitchBusiness={handleSwitchBusiness}
     >
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-5xl mx-auto space-y-6">
         {/* Header */}
         <div>
           <Button
@@ -233,145 +193,308 @@ const CampaignWorking = () => {
             Create New Campaign
           </h1>
           <p className="text-lg text-muted-foreground">
-            Fill in the details below to generate a complete social media campaign
+            3-stage AI campaign generation: Brief → Strategy → Calendar
           </p>
         </div>
 
-        {/* Campaign Brief Form */}
-        <Card className="p-8">
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold mb-4">Campaign Brief</h2>
-              <p className="text-muted-foreground mb-6">
-                Tell us what you want to achieve with this campaign
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="campaign-goal">Campaign Goal</Label>
-                <Textarea
-                  id="campaign-goal"
-                  placeholder="e.g., Increase weekend bookings by 20%"
-                  value={campaignGoal}
-                  onChange={(e) => setCampaignGoal(e.target.value)}
-                  rows={3}
-                />
+        {/* Stepper */}
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            {steps.map((step, index) => (
+              <div key={step.number} className="flex items-center flex-1">
+                <div className="flex items-center">
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+                      step.completed
+                        ? "bg-green-500 text-white"
+                        : currentStage === step.number
+                        ? "bg-primary text-white"
+                        : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {step.completed ? <Check className="w-5 h-5" /> : step.number}
+                  </div>
+                  <div className="ml-3">
+                    <p className={`font-medium ${currentStage === step.number ? "text-primary" : ""}`}>
+                      {step.label}
+                    </p>
+                  </div>
+                </div>
+                {index < steps.length - 1 && (
+                  <div className={`flex-1 h-1 mx-4 ${step.completed ? "bg-green-500" : "bg-muted"}`} />
+                )}
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="target-outcome">Target Outcome</Label>
-                <Textarea
-                  id="target-outcome"
-                  placeholder="e.g., Get 50+ catering inquiries"
-                  value={targetOutcome}
-                  onChange={(e) => setTargetOutcome(e.target.value)}
-                  rows={3}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="duration">Campaign Duration</Label>
-                <Select value={duration} onValueChange={setDuration}>
-                  <SelectTrigger id="duration">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="7">7 days</SelectItem>
-                    <SelectItem value="14">14 days</SelectItem>
-                    <SelectItem value="21">21 days</SelectItem>
-                    <SelectItem value="30">30 days</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            ))}
           </div>
         </Card>
 
-        {/* Persona Selection */}
-        <Card className="p-8">
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-semibold mb-2">Select Target Persona</h2>
-              <p className="text-muted-foreground">
-                Choose the audience you want to reach with this campaign
-              </p>
-            </div>
-
-            {profile.personas && profile.personas.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {profile.personas.map((persona) => (
-                  <Card
-                    key={persona.id}
-                    className={`p-6 cursor-pointer transition-all hover:shadow-lg ${
-                      selectedPersona?.id === persona.id
-                        ? "border-2 border-primary bg-primary/5"
-                        : "border border-border"
-                    }`}
-                    onClick={() => handlePersonaSelect(persona)}
-                  >
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-3">
-                          <span className="text-4xl">{persona.emoji}</span>
-                          <div>
-                            <h3 className="font-semibold text-lg">{persona.name}</h3>
-                          </div>
-                        </div>
-                        {selectedPersona?.id === persona.id && (
-                          <CheckCircle2 className="w-6 h-6 text-primary" />
-                        )}
-                      </div>
-
-                      <p className="text-sm text-muted-foreground">
-                        {persona.who_are_they}
-                      </p>
-
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-2">Main Problem:</p>
-                        <p className="text-sm font-medium">{persona.main_problem}</p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2">
-                        {persona.platforms.map((platform) => (
-                          <Badge key={platform} variant="secondary" className="text-xs">
-                            {platform}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 bg-secondary rounded-lg">
-                <p className="text-muted-foreground">
-                  No personas found. Please add personas in your Brand Hub first.
+        {/* Stage 1: Campaign Brief */}
+        {currentStage === 1 && (
+          <Card className="p-8">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold mb-4">Stage 1: Campaign Brief</h2>
+                <p className="text-muted-foreground mb-6">
+                  Tell us your business goal, and AI will recommend which personas to target
                 </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="campaign-goal">Campaign Goal *</Label>
+                  <Textarea
+                    id="campaign-goal"
+                    placeholder='e.g., "Promote our new summer menu and get more weekend customers"'
+                    value={campaignGoal}
+                    onChange={(e) => setCampaignGoal(e.target.value)}
+                    rows={3}
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Think business outcome, not marketing jargon
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="target-outcome">Target Outcome (Optional)</Label>
+                  <Textarea
+                    id="target-outcome"
+                    placeholder='e.g., "50+ bookings for Saturday nights"'
+                    value={targetOutcome}
+                    onChange={(e) => setTargetOutcome(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Campaign Duration</Label>
+                  <Select value={duration} onValueChange={setDuration}>
+                    <SelectTrigger id="duration">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="7">7 days</SelectItem>
+                      <SelectItem value="14">14 days</SelectItem>
+                      <SelectItem value="21">21 days</SelectItem>
+                      <SelectItem value="30">30 days</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
                 <Button
-                  variant="outline"
-                  className="mt-4"
-                  onClick={() => navigate("/brand-hub")}
+                  size="lg"
+                  onClick={handleStage1}
+                  disabled={!campaignGoal || loading}
                 >
-                  Go to Brand Hub
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Generate Persona Strategy
                 </Button>
               </div>
-            )}
-          </div>
-        </Card>
+            </div>
+          </Card>
+        )}
 
-        {/* Generate Button */}
-        <div className="flex justify-end">
-          <Button
-            size="lg"
-            onClick={handleGenerateCampaign}
-            disabled={!selectedPersona || !campaignGoal || !targetOutcome || loading}
-            className="w-full md:w-auto"
-          >
-            <Sparkles className="w-5 h-5 mr-2" />
-            Generate Campaign
-          </Button>
-        </div>
+        {/* Stage 2: Persona Strategy Approval */}
+        {currentStage === 2 && personaStrategies && (
+          <Card className="p-8">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold mb-2">Stage 2: Persona Strategy</h2>
+                <p className="text-muted-foreground">
+                  Review the recommended personas and their strategies
+                </p>
+              </div>
+
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="font-medium text-lg mb-2">Campaign Goal:</p>
+                <p className="text-muted-foreground">{personaStrategies.campaign_goal}</p>
+              </div>
+
+              <Separator />
+
+              <div>
+                <h3 className="font-semibold text-lg mb-4">Recommended Personas:</h3>
+                <div className="space-y-4">
+                  {personaStrategies.persona_strategies?.map((ps: any, index: number) => (
+                    <Card key={index} className="p-6 border-l-4 border-l-primary">
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <span className="text-4xl">{ps.persona_emoji}</span>
+                            <h4 className="font-semibold text-xl">{ps.persona_name}</h4>
+                          </div>
+                          <Badge variant="secondary">{ps.action_intent_level} intent</Badge>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Why target them:</p>
+                          <p className="font-medium">{ps.why_target_them}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Key Message:</p>
+                            <p className="text-sm">{ps.key_message}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-muted-foreground mb-1">Desired Emotion:</p>
+                            <p className="text-sm capitalize">{ps.desired_emotion}</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Immediate Action:</p>
+                          <p className="text-sm font-medium">{ps.immediate_action}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Expected Outcome:</p>
+                          <p className="text-sm">{ps.expected_outcome}</p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2">
+                          {ps.platforms?.map((platform: string) => (
+                            <Badge key={platform} variant="outline">
+                              {platform}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {personaStrategies.strategy_summary && (
+                <div className="bg-primary/5 p-4 rounded-lg border border-primary/20">
+                  <p className="text-sm font-medium mb-2">Strategy Summary:</p>
+                  <p className="text-sm text-muted-foreground">{personaStrategies.strategy_summary}</p>
+                </div>
+              )}
+
+              <div className="flex justify-between pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStage(1)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Brief
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={handleStage2}
+                  disabled={loading}
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Approve & Generate Calendar
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Stage 3: Content Calendar */}
+        {currentStage === 3 && contentCalendar && (
+          <Card className="p-8">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-2xl font-semibold mb-2">Stage 3: Content Calendar</h2>
+                <p className="text-muted-foreground">
+                  Your strategic content calendar is ready!
+                </p>
+              </div>
+
+              {contentCalendar.content_calendar?.overview && (
+                <div className="bg-muted/50 p-6 rounded-lg space-y-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Total Posts:</p>
+                    <p className="text-2xl font-bold">{contentCalendar.content_calendar.overview.total_posts}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-2">Platform Breakdown:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {Object.entries(contentCalendar.content_calendar.overview.platform_breakdown || {}).map(
+                        ([platform, count]: [string, any]) => (
+                          <Badge key={platform} variant="secondary">
+                            {platform}: {count}
+                          </Badge>
+                        )
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">Flow:</p>
+                    <p className="text-sm">{contentCalendar.content_calendar.overview.flow}</p>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              <div>
+                <h3 className="font-semibold text-lg mb-4">Content Posts:</h3>
+                <div className="space-y-4 max-h-96 overflow-y-auto">
+                  {contentCalendar.content_calendar?.posts?.map((post: any, index: number) => (
+                    <Card key={index} className="p-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline">Day {post.day}</Badge>
+                            <Badge variant="secondary">{post.platform}</Badge>
+                            <Badge>{post.format}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{post.time_of_day}</p>
+                        </div>
+
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Target: {post.target_persona}</p>
+                          <p className="font-medium">{post.key_message}</p>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-2 text-sm">
+                          <div>
+                            <p className="text-muted-foreground">Emotion:</p>
+                            <p className="capitalize">{post.desired_emotion}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Action:</p>
+                            <p>{post.immediate_action}</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Stage:</p>
+                            <p className="capitalize">{post.journey_stage}</p>
+                          </div>
+                        </div>
+
+                        <p className="text-sm text-muted-foreground italic">
+                          {post.content_direction}
+                        </p>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex justify-between pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setCurrentStage(2)}
+                >
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit Strategy
+                </Button>
+                <Button
+                  size="lg"
+                  onClick={() => toast.info("Copy generation coming in future session!")}
+                >
+                  <Sparkles className="w-5 h-5 mr-2" />
+                  Generate Copy (Coming Soon)
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
       </div>
     </DashboardLayout>
   );
