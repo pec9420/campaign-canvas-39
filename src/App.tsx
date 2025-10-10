@@ -10,6 +10,7 @@ import BrandHub from "./pages/BrandHubSimplified";
 import Settings from "./pages/Settings";
 import CampaignWorking from "./pages/CampaignWorking";
 import CampaignResults from "./pages/CampaignResults";
+import CampaignSuccess from "./pages/CampaignSuccess";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/brand-hub" element={<BrandHub />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/campaign-results" element={<CampaignResults />} />
+          <Route path="/campaign-success" element={<CampaignSuccess />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

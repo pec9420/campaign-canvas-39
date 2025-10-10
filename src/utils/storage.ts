@@ -102,39 +102,71 @@ export const getCurrentProfile = async (): Promise<BusinessProfile | null> => {
   return defaultProfile;
 };
 
-export const saveCampaign = (profileId: string, campaign: any) => {
-  const campaigns = getAllCampaigns();
-  if (!campaigns[profileId]) {
-    campaigns[profileId] = [];
+export const saveCampaign = async (profileId: string, campaign: any): Promise<string> => {
+  try {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .insert({
+        profile_id: profileId,
+        goal: campaign.goal,
+        target_outcome: campaign.target_outcome || null,
+        duration_days: campaign.duration_days,
+        persona_strategies: campaign.persona_strategies as any,
+        content_calendar: campaign.content_calendar as any,
+        generated_copy: campaign.generated_copy as any,
+        status: campaign.status || 'approved'
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Error saving campaign:", error);
+      throw error;
+    }
+
+    return data.id;
+  } catch (error) {
+    console.error("Error saving campaign:", error);
+    throw error;
   }
-  campaigns[profileId].push({
-    ...campaign,
-    id: Date.now().toString(),
-    created_at: new Date().toISOString()
-  });
-  localStorage.setItem(CAMPAIGNS_KEY, JSON.stringify(campaigns));
-  return campaigns[profileId][campaigns[profileId].length - 1].id;
 };
 
-export const getCampaign = (campaignId: string): any | null => {
-  const campaigns = getAllCampaigns();
-  for (const profileCampaigns of Object.values(campaigns)) {
-    const found = (profileCampaigns as any[]).find((c: any) => c.id === campaignId);
-    if (found) return found;
+export const getCampaign = async (campaignId: string): Promise<any | null> => {
+  try {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('id', campaignId)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error loading campaign:", error);
+      throw error;
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error loading campaign:", error);
+    return null;
   }
-  return null;
 };
 
-export const getAllCampaigns = (): Record<string, any[]> => {
-  const stored = localStorage.getItem(CAMPAIGNS_KEY);
-  return stored ? JSON.parse(stored) : {};
-};
+export const getCampaignsByProfile = async (profileId: string): Promise<any[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false });
 
-export const getCampaignsByProfile = (profileId: string): any[] => {
-  const campaigns = getAllCampaigns();
-  return campaigns[profileId] || [];
-};
+    if (error) {
+      console.error("Error loading campaigns:", error);
+      throw error;
+    }
 
-export const clearAllCampaigns = () => {
-  localStorage.removeItem(CAMPAIGNS_KEY);
+    return data || [];
+  } catch (error) {
+    console.error("Error loading campaigns:", error);
+    return [];
+  }
 };

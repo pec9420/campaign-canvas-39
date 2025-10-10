@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DashboardLayout } from "@/components/ui/dashboard-layout";
-import { getCurrentProfile, getCampaignsByProfile, saveCampaign, clearAllCampaigns } from "@/utils/storage";
-import { generateMockCampaign } from "@/data/mockCampaigns";
+import { getCurrentProfile, getCampaignsByProfile } from "@/utils/storage";
 import { BusinessProfile } from "@/data/profiles";
 import { Sparkles, TrendingUp, Calendar, Palette, Target, CheckCircle, Clock } from "lucide-react";
 
@@ -16,7 +14,6 @@ const Dashboard = () => {
   const location = useLocation();
 
   const [profile, setProfile] = useState<BusinessProfile | null>(null);
-  const [goal, setGoal] = useState("");
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [calendarView, setCalendarView] = useState<'weekly' | 'monthly'>('weekly');
 
@@ -33,67 +30,16 @@ const Dashboard = () => {
       setProfile(loadedProfile);
       const profileId = loadedProfile.id;
 
-      // One-time cleanup for existing duplicates and add new campaigns
-      const cleanupDone = localStorage.getItem('cleanup_duplicates_v2_done');
-      if (!cleanupDone && profileId === "stack_creamery") {
-        clearAllCampaigns();
-        localStorage.removeItem('stack_creamery_campaigns_initialized');
-        localStorage.setItem('cleanup_duplicates_v2_done', 'true');
-      }
-
       // Load campaigns for this profile
-      let profileCampaigns = getCampaignsByProfile(profileId);
-
-      // For Stack Creamery, ensure we have exactly one sample campaign
-      if (profileId === "stack_creamery") {
-        const hasInitialized = localStorage.getItem(`${profileId}_campaigns_initialized`);
-
-        if (!hasInitialized) {
-          // Clear any existing campaigns and create fresh ones
-          clearAllCampaigns();
-
-          // Create first sample campaign (completed)
-          const completedCampaign = generateMockCampaign("boost catering orders", loadedProfile);
-          const completedCampaignWithMeta = {
-            ...completedCampaign,
-            goal: "Boost catering orders for summer events",
-            status: "completed",
-            created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString() // 7 days ago
-          };
-          saveCampaign(profileId, completedCampaignWithMeta);
-
-          // Create second sample campaign (in progress)
-          const inProgressCampaign = generateMockCampaign("increase foot traffic", loadedProfile);
-          // Modify the title for the in-progress campaign
-          inProgressCampaign.strategy.overview.title = "Stack Creamery Holiday Promotion Campaign";
-          const inProgressCampaignWithMeta = {
-            ...inProgressCampaign,
-            goal: "Increase foot traffic during holiday season",
-            status: "in_progress",
-            created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString() // 3 days ago
-          };
-          saveCampaign(profileId, inProgressCampaignWithMeta);
-
-          // Mark as initialized to prevent future duplicates
-          localStorage.setItem(`${profileId}_campaigns_initialized`, 'true');
-
-          profileCampaigns = getCampaignsByProfile(profileId);
-        }
-      }
-
+      const profileCampaigns = await getCampaignsByProfile(profileId);
       setCampaigns(profileCampaigns);
     };
     loadProfile();
   }, [navigate]);
 
   const handleCreateCampaign = () => {
-    if (!goal.trim() || !profile) return;
-    const encodedGoal = encodeURIComponent(goal);
-    navigate(`/campaign?profileId=${profile.id}&goal=${encodedGoal}`);
-  };
-
-  const handleQuickGoal = (quickGoal: string) => {
-    setGoal(quickGoal);
+    if (!profile) return;
+    navigate(`/campaign?profileId=${profile.id}`);
   };
 
   const handleSwitchBusiness = () => {
@@ -101,13 +47,6 @@ const Dashboard = () => {
   };
 
   if (!profile) return null;
-
-  const quickGoals = [
-    "Increase foot traffic",
-    "Boost catering orders",
-    "Launch new product",
-    "Holiday promotion"
-  ];
 
   const insights = [
     "Post consistently 3-4 times per week for best engagement",
@@ -130,54 +69,17 @@ const Dashboard = () => {
       onSwitchBusiness={handleSwitchBusiness}
     >
       <div className="space-y-6">
-        {/* Create Campaign Card */}
-        <Card className="p-8 bg-gradient-to-r from-primary/5 to-purple-500/5 border-primary/20 hover-glow animate-fadeIn">
-          <div className="space-y-6">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground mb-2">
-                Create New Campaign
-              </h2>
-              <p className="text-muted-foreground">
-                Tell us what you want to achieve, and we'll create a tailored social media campaign for you.
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <Textarea
-                value={goal}
-                onChange={(e) => setGoal(e.target.value)}
-                placeholder="e.g., Get more catering bookings, Increase foot traffic, Launch new product..."
-                rows={4}
-                className="text-base resize-none"
-              />
-
-              {/* Quick Goal Pills */}
-              <div className="flex flex-wrap gap-2">
-                <span className="text-sm text-muted-foreground mr-2">Quick ideas:</span>
-                {quickGoals.map((quickGoal) => (
-                  <Badge
-                    key={quickGoal}
-                    variant="secondary"
-                    className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
-                    onClick={() => handleQuickGoal(quickGoal)}
-                  >
-                    {quickGoal}
-                  </Badge>
-                ))}
-              </div>
-            </div>
-
-            <Button
-              onClick={handleCreateCampaign}
-              disabled={!goal.trim()}
-              size="lg"
-              className="w-full h-14 text-lg font-semibold"
-            >
-              <Sparkles className="w-5 h-5 mr-2" />
-              Generate Campaign
-            </Button>
-          </div>
-        </Card>
+        {/* Create Campaign Button */}
+        <div className="flex justify-end">
+          <Button
+            onClick={handleCreateCampaign}
+            size="lg"
+            className="h-12 px-8 text-base font-semibold"
+          >
+            <Sparkles className="w-5 h-5 mr-2" />
+            Create New Campaign
+          </Button>
+        </div>
 
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -217,7 +119,7 @@ const Dashboard = () => {
                       </p>
                       <Button
                         variant="outline"
-                        onClick={() => setGoal("Increase brand awareness")}
+                        onClick={handleCreateCampaign}
                       >
                         Get Started
                       </Button>
@@ -236,24 +138,32 @@ const Dashboard = () => {
                           <div className="flex items-center justify-between">
                             <div className="flex-1">
                               <h4 className="font-medium text-foreground mb-1">
-                                {campaign.strategy?.overview?.title || `Campaign ${index + 1}`}
+                                {campaign.goal || campaign.strategy?.overview?.title || `Campaign ${index + 1}`}
                               </h4>
                               <p className="text-sm text-muted-foreground mb-2">
-                                {campaign.goal}
+                                {campaign.persona_strategies
+                                  ? `${campaign.persona_strategies.persona_strategies?.length || 0} personas • ${campaign.generated_copy?.length || campaign.content_calendar?.content_calendar?.posts?.length || 0} posts`
+                                  : campaign.strategy?.content_plan?.total_posts
+                                  ? `${campaign.strategy.content_plan.total_posts} posts`
+                                  : ''}
                               </p>
                               <div className="flex items-center space-x-4 text-xs text-muted-foreground">
                                 <span>
-                                  {campaign.strategy?.overview?.start_date && campaign.strategy?.overview?.end_date ?
-                                    `${new Date(campaign.strategy.overview.start_date).toLocaleDateString()} - ${new Date(campaign.strategy.overview.end_date).toLocaleDateString()}` :
-                                    "14 days"
+                                  {campaign.duration_days
+                                    ? `${campaign.duration_days} days`
+                                    : campaign.strategy?.overview?.start_date && campaign.strategy?.overview?.end_date
+                                    ? `${new Date(campaign.strategy.overview.start_date).toLocaleDateString()} - ${new Date(campaign.strategy.overview.end_date).toLocaleDateString()}`
+                                    : "14 days"
                                   }
                                 </span>
                                 <span className={`px-2 py-1 rounded text-xs font-medium ${
                                   campaign.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                  campaign.status === 'approved' ? 'bg-green-100 text-green-700' :
                                   campaign.status === 'in_progress' ? 'bg-blue-100 text-blue-700' :
                                   'bg-gray-100 text-gray-700'
                                 }`}>
                                   {campaign.status === 'completed' ? 'Completed' :
+                                   campaign.status === 'approved' ? 'Approved' :
                                    campaign.status === 'in_progress' ? 'In Progress' :
                                    'Draft'}
                                 </span>
