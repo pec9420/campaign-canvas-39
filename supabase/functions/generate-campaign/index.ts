@@ -19,21 +19,21 @@ serve(async (req) => {
     const body = await req.json();
     const { stage, profile, brief, approvedStrategies, postStrategy, persona } = body;
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY');
+    if (!ANTHROPIC_API_KEY) {
+      throw new Error('ANTHROPIC_API_KEY is not configured');
     }
 
     // Route to appropriate stage handler
     switch (stage) {
       case 'persona_strategy':
-        return await handlePersonaStrategy(profile, brief, LOVABLE_API_KEY);
+        return await handlePersonaStrategy(profile, brief, ANTHROPIC_API_KEY);
 
       case 'content_calendar':
-        return await handleContentCalendar(profile, brief, approvedStrategies, LOVABLE_API_KEY);
+        return await handleContentCalendar(profile, brief, approvedStrategies, ANTHROPIC_API_KEY);
 
       case 'copywriter':
-        return await handleCopywriter(profile, persona, postStrategy, LOVABLE_API_KEY);
+        return await handleCopywriter(profile, persona, postStrategy, ANTHROPIC_API_KEY);
 
       default:
         throw new Error('Invalid stage parameter. Must be: persona_strategy, content_calendar, or copywriter');
@@ -90,6 +90,8 @@ function getPersonaStrategySystemPrompt(): string {
   return `You are a Campaign Strategy Agent for small business marketing.
 
 Your task: Analyze the business goal and recommend which customer personas to target, with what messages, emotions, and actions.
+
+IMPORTANT: You MUST return ONLY valid JSON. Do not include any explanatory text before or after the JSON. Do not wrap the JSON in markdown code blocks.
 
 CRITICAL CONTEXT: Business owners think in terms of business goals ("get more weekend customers"), NOT personas. Your job is to:
 1. Analyze their business goal
@@ -210,6 +212,8 @@ async function handleContentCalendar(profile: any, brief: any, approvedStrategie
 
 function getContentCalendarSystemPrompt(): string {
   return `You are a Campaign Strategy Agent creating detailed content calendars.
+
+IMPORTANT: You MUST return ONLY valid JSON. Do not include any explanatory text before or after the JSON. Do not wrap the JSON in markdown code blocks.
 
 You've received approved persona strategies from Stage 1 (target audiences, emotions, actions).
 Now create a day-by-day content strategy that orchestrates the customer journey.
@@ -353,6 +357,8 @@ async function handleCopywriter(profile: any, persona: any, postStrategy: any, a
 function getCopywriterSystemPrompt(): string {
   return `You are a Copywriter Agent who writes natural, human-sounding social media copy.
 
+IMPORTANT: You MUST return ONLY valid JSON. Do not include any explanatory text before or after the JSON. Do not wrap the JSON in markdown code blocks.
+
 Your goal: Write copy that sounds like a PERSON talking, not a polished marketing message.
 
 NATURAL CADENCE RULES:
@@ -421,45 +427,60 @@ Return JSON as specified in your system prompt.`;
 // ============================================================================
 
 async function callAI(systemPrompt: string, userPrompt: string, apiKey: string) {
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${apiKey}`,
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 4096,
+      system: systemPrompt,
       messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      response_format: { type: "json_object" }
+        {
+          role: "user",
+          content: userPrompt
+        }
+      ]
     })
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("AI API error:", response.status, errorText);
+    console.error("Claude API error:", response.status, errorText);
 
     if (response.status === 429) {
       throw new Error("Rate limit exceeded. Please try again in a moment.");
     }
 
-    if (response.status === 402) {
-      throw new Error("Payment required. Please add credits to your workspace.");
+    if (response.status === 401) {
+      throw new Error("Invalid API key. Please check your ANTHROPIC_API_KEY.");
     }
 
-    throw new Error(`AI API request failed: ${response.status} ${errorText}`);
+    throw new Error(`Claude API request failed: ${response.status} ${errorText}`);
   }
 
   const data = await response.json();
-  const generatedContent = data.choices?.[0]?.message?.content;
+  const generatedContent = data.content?.[0]?.text;
 
   if (!generatedContent) {
-    throw new Error("No content generated from AI");
+    throw new Error("No content generated from Claude");
   }
 
-  return JSON.parse(generatedContent);
+  // Parse JSON from Claude's response
+  // Claude may wrap JSON in markdown code blocks, so we need to extract it
+  let jsonText = generatedContent.trim();
+
+  // Remove markdown code blocks if present
+  if (jsonText.startsWith('```json')) {
+    jsonText = jsonText.replace(/^```json\n/, '').replace(/\n```$/, '');
+  } else if (jsonText.startsWith('```')) {
+    jsonText = jsonText.replace(/^```\n/, '').replace(/\n```$/, '');
+  }
+
+  return JSON.parse(jsonText);
 }
 
 // ============================================================================
